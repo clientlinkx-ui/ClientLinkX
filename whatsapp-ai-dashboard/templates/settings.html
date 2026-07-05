@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}
+Settings
+{% endblock %}
+
+{% block content %}
+<section class="settings-page">
+    <div class="settings-layout">
+        <aside class="settings-nav" aria-label="Settings sections">
+            <a href="#workspace" class="active"><i class="fa-solid fa-building"></i> Workspace</a>
+            <a href="#whatsapp"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+            <a href="#ai"><i class="fa-solid fa-robot"></i> AI Assistant</a>
+            <a href="#handoff"><i class="fa-solid fa-headset"></i> Handoff</a>
+            <a href="#modules"><i class="fa-solid fa-layer-group"></i> Modules</a>
+            <a href="#notifications"><i class="fa-solid fa-bell"></i> Notifications</a>
+            <a href="#security"><i class="fa-solid fa-shield-halved"></i> Security</a>
+        </aside>
+
+        <div class="settings-content">
+            <section class="settings-section" id="workspace">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Company</span>
+                        <h2>Workspace Profile</h2>
+                    </div>
+                    <button class="primary-action" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+                </div>
+
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Company name</span>
+                        <input type="text" value="{{ workspace.company_name }}">
+                    </label>
+                    <label class="field">
+                        <span>Industry</span>
+                        <input type="text" value="{{ workspace.industry }}">
+                    </label>
+                    <label class="field">
+                        <span>Timezone</span>
+                        <select>
+                            <option selected>{{ workspace.timezone }}</option>
+                            <option>Asia/Dubai</option>
+                            <option>Europe/London</option>
+                            <option>America/New_York</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Default language</span>
+                        <select>
+                            <option selected>{{ workspace.language }}</option>
+                            <option>Hindi</option>
+                            <option>Arabic</option>
+                            <option>Spanish</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section" id="whatsapp">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Channels</span>
+                        <h2>WhatsApp Integration</h2>
+                    </div>
+                    <button class="icon-button" type="button" title="Refresh channel status">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+
+                <div class="connection-list">
+                    {% for channel in channels %}
+                    <div class="connection-item">
+                        <div>
+                            <strong>{{ channel.name }}</strong>
+                            <span>{{ channel.detail }}</span>
+                        </div>
+                        <span class="settings-badge {{ channel.tone }}">{{ channel.status }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-grid compact-grid">
+                    <label class="field">
+                        <span>Webhook URL</span>
+                        <input type="url" value="https://api.clientlinkx.ai/webhooks/whatsapp">
+                    </label>
+                    <label class="field">
+                        <span>Message window policy</span>
+                        <select>
+                            <option selected>24 hour service window</option>
+                            <option>Template-only outside window</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section" id="ai">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Runtime</span>
+                        <h2>AI Assistant Settings</h2>
+                    </div>
+                </div>
+
+                <div class="model-settings-list">
+                    {% for model in models %}
+                    <div class="model-setting-row">
+                        <div>
+                            <strong>{{ model.name }}</strong>
+                            <span>{{ model.model }} · Temperature {{ model.temperature }}</span>
+                        </div>
+                        <span class="settings-badge good">{{ model.status }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="control-grid">
+                    <label class="field">
+                        <span>Primary model</span>
+                        <select>
+                            <option selected>GPT-4.1 Mini</option>
+                            <option>GPT-4.1</option>
+                            <option>GPT-4.1 Nano</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Answer confidence threshold</span>
+                        <input type="range" min="0" max="100" value="78">
+                    </label>
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Use knowledge base grounding</strong>
+                            <small>Restrict answers to approved documents when possible.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Auto-detect customer intent</strong>
+                            <small>Route leads, appointments, orders, and support tickets automatically.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section" id="handoff">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Escalations</span>
+                        <h2>Human Handoff Rules</h2>
+                    </div>
+                </div>
+
+                <div class="rules-grid">
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Escalate low-confidence replies</strong>
+                            <small>Send conversations below confidence threshold to a team member.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Escalate negative sentiment</strong>
+                            <small>Prioritize frustrated or dissatisfied customers.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="field">
+                        <span>Default handoff team</span>
+                        <select>
+                            <option selected>Support Desk</option>
+                            <option>Sales Team A</option>
+                            <option>Admissions Desk</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>SLA target</span>
+                        <select>
+                            <option selected>Under 10 minutes</option>
+                            <option>Under 30 minutes</option>
+                            <option>Under 1 hour</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section" id="modules">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Business</span>
+                        <h2>Enabled Modules</h2>
+                    </div>
+                </div>
+
+                <div class="module-settings-list">
+                    {% for module in modules %}
+                    <label class="module-setting-card">
+                        <span>
+                            <strong>{{ module.name }}</strong>
+                            <small>Owner: {{ module.owner }}</small>
+                        </span>
+                        <input type="checkbox" {% if module.enabled %}checked{% endif %}>
+                    </label>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="settings-section" id="notifications">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Alerts</span>
+                        <h2>Notifications</h2>
+                    </div>
+                </div>
+
+                <div class="rules-grid">
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Daily performance digest</strong>
+                            <small>Email workspace admins every morning.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Escalation SLA alerts</strong>
+                            <small>Notify team leads before SLA breach.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Knowledge base sync failures</strong>
+                            <small>Alert admins when source documents fail to update.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section" id="security">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Access</span>
+                        <h2>Security and Compliance</h2>
+                    </div>
+                </div>
+
+                <div class="rules-grid">
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Require two-factor authentication</strong>
+                            <small>Applies to all workspace administrators.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Mask customer phone numbers</strong>
+                            <small>Hide full numbers from non-admin team members.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="field">
+                        <span>Conversation retention</span>
+                        <select>
+                            <option selected>180 days</option>
+                            <option>90 days</option>
+                            <option>365 days</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Audit log export</span>
+                        <select>
+                            <option selected>Monthly CSV</option>
+                            <option>Weekly CSV</option>
+                            <option>Manual only</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}

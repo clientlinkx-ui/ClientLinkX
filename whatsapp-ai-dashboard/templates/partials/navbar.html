@@ -1,0 +1,164 @@
+<header class="navbar">
+
+    <!-- ========================================= -->
+    <!-- Left Section -->
+    <!-- ========================================= -->
+
+    <div class="navbar-left">
+
+        <!-- Mobile Sidebar Toggle -->
+
+        <button class="mobile-menu-btn"
+                id="mobileMenuBtn">
+
+            <i class="fa-solid fa-bars"></i>
+
+        </button>
+
+        <!-- Page Title -->
+
+        <div class="page-title">
+
+            <h1>{{ page_title or "Dashboard" }}</h1>
+
+            <p>{{ page_subtitle or "Monitor your AI assistant in real time." }}</p>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Center Section -->
+    <!-- ========================================= -->
+
+    <div class="navbar-center">
+
+        <form class="search-box">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="text"
+                placeholder="Search conversations, customers, documents..."
+                autocomplete="off">
+
+        </form>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Right Section -->
+    <!-- ========================================= -->
+
+    <div class="navbar-right">
+
+        <!-- Quick Actions -->
+
+        <button class="nav-btn"
+                title="New Conversation">
+
+            <i class="fa-solid fa-plus"></i>
+
+        </button>
+
+        <button class="nav-btn"
+                title="Notifications">
+
+            <i class="fa-regular fa-bell"></i>
+
+            <span class="notification-badge">
+                3
+            </span>
+
+        </button>
+
+        <button class="nav-btn"
+                title="Messages">
+
+            <i class="fa-regular fa-envelope"></i>
+
+            <span class="notification-badge">
+                8
+            </span>
+
+        </button>
+
+        <!-- Divider -->
+
+        <div class="navbar-divider"></div>
+
+        <!-- User Dropdown -->
+
+        <div class="profile-dropdown">
+
+            <button class="profile-btn">
+
+                <img
+                    src="{{ url_for('static', filename='images/avatar.png') }}"
+                    alt="Profile">
+
+                <div class="profile-details">
+
+                    <span class="profile-name">
+
+                        Admin User
+
+                    </span>
+
+                    <span class="profile-role">
+
+                        Super Admin
+
+                    </span>
+
+                </div>
+
+                <i class="fa-solid fa-chevron-down"></i>
+
+            </button>
+
+            <!-- Dropdown -->
+
+            <div class="dropdown-menu">
+
+                <a href="#">
+
+                    <i class="fa-regular fa-user"></i>
+
+                    My Profile
+
+                </a>
+
+                <a href="#">
+
+                    <i class="fa-solid fa-building"></i>
+
+                    Workspace
+
+                </a>
+
+                <a href="#">
+
+                    <i class="fa-solid fa-gear"></i>
+
+                    Settings
+
+                </a>
+
+                <hr>
+
+                <a href="#">
+
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+
+                    Logout
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>

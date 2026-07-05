@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}
+WhatsApp AI Customer Dashboard
+{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+    <section class="overview-strip" aria-label="Workspace overview">
+        <div class="overview-copy">
+            <span class="eyebrow">Live workspace</span>
+            <h2>EverTech Solutions</h2>
+            <p>AI assistant is handling WhatsApp conversations across sales, support, admissions, appointments, and orders.</p>
+        </div>
+
+        <div class="overview-actions">
+            <button class="icon-button" type="button" title="Export report">
+                <i class="fa-solid fa-download"></i>
+            </button>
+            <button class="primary-action" type="button">
+                <i class="fa-solid fa-sliders"></i>
+                Configure AI
+            </button>
+        </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Key metrics">
+        {% for stat in stats %}
+            {% with title=stat.title, value=stat.value, change=stat.change, trend=stat.trend, icon=stat.icon %}
+                {% include 'partials/stat_card.html' %}
+            {% endwith %}
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid dashboard-grid-main">
+        <article class="panel traffic-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Volume</span>
+                    <h2>Conversation Traffic</h2>
+                </div>
+                <div class="segmented-control" aria-label="Chart range">
+                    <button class="active" type="button">7D</button>
+                    <button type="button">30D</button>
+                    <button type="button">90D</button>
+                </div>
+            </div>
+            <div class="chart-frame">
+                <canvas id="trafficChart" aria-label="Conversation traffic chart"></canvas>
+            </div>
+        </article>
+
+        <article class="panel model-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">AI Model</span>
+                    <h2>Runtime Status</h2>
+                </div>
+                <span class="status-pill online">Online</span>
+            </div>
+
+            <div class="model-card">
+                <div class="model-icon">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h3>GPT-4.1 Mini</h3>
+                    <p>Primary model for customer support and lead qualification.</p>
+                </div>
+            </div>
+
+            <div class="model-metrics">
+                <div>
+                    <span>Accuracy</span>
+                    <strong>93.8%</strong>
+                </div>
+                <div>
+                    <span>Avg latency</span>
+                    <strong>1.2s</strong>
+                </div>
+                <div>
+                    <span>Prompt version</span>
+                    <strong>v3.4</strong>
+                </div>
+            </div>
+
+            <div class="health-list">
+                <div>
+                    <span>WhatsApp API</span>
+                    <strong class="good">Healthy</strong>
+                </div>
+                <div>
+                    <span>Knowledge base</span>
+                    <strong class="good">Synced</strong>
+                </div>
+                <div>
+                    <span>Human handoff</span>
+                    <strong class="warning">4 queues active</strong>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid dashboard-grid-secondary">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Outcomes</span>
+                    <h2>Business Modules</h2>
+                </div>
+                <button class="icon-button" type="button" title="Manage modules">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+
+            <div class="module-grid">
+                {% for module in modules %}
+                <div class="module-card">
+                    <div class="module-top">
+                        <span class="module-icon"><i class="{{ module.icon }}"></i></span>
+                        <strong>{{ module.name }}</strong>
+                    </div>
+                    <div class="module-value">{{ module.value }}</div>
+                    <span class="module-label">{{ module.label }}</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" data-progress="{{ module.progress }}"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Escalations</span>
+                    <h2>Handoff Queue</h2>
+                </div>
+                <span class="queue-total">98 open</span>
+            </div>
+
+            <div class="queue-list">
+                {% for escalation in escalations %}
+                <div class="queue-item">
+                    <div>
+                        <strong>{{ escalation.team }}</strong>
+                        <span>Avg SLA {{ escalation.sla }}</span>
+                    </div>
+                    <div class="queue-count {{ escalation.tone }}">{{ escalation.count }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel status-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Quality</span>
+                    <h2>Conversation Status</h2>
+                </div>
+            </div>
+            <div class="chart-frame compact">
+                <canvas id="statusChart" aria-label="Conversation status chart"></canvas>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid dashboard-grid-lists">
+        <article class="panel conversation-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Inbox</span>
+                    <h2>Recent Conversations</h2>
+                </div>
+                <a href="#">View all</a>
+            </div>
+
+            <div class="conversation-list">
+                {% for conversation in conversations %}
+                    {% with customer_name=conversation.customer_name, avatar=conversation.avatar, time=conversation.time, last_message=conversation.last_message, handler=conversation.handler, status=conversation.status, unread=conversation.unread %}
+                        {% include 'partials/conversation_item.html' %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel activity-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Audit Trail</span>
+                    <h2>Recent Activity</h2>
+                </div>
+            </div>
+
+            <div class="activity-list">
+                {% for activity in activities %}
+                    {% with title=activity.title, description=activity.description, activity_type=activity.activity_type, icon=activity.icon, time=activity.time, user=activity.user, status=activity.status %}
+                        {% include 'partials/activity_item.html' %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="performance-grid" aria-label="Performance">
+        {% for metric in performance %}
+            {% with title=metric.title, subtitle=metric.subtitle, icon=metric.icon, value=metric.value, unit=metric.unit, progress=metric.progress, status=metric.status, change=metric.change %}
+                {% include 'partials/performance_card.html' %}
+            {% endwith %}
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}

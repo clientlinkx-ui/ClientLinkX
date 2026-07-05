@@ -1,0 +1,61 @@
+<div class="stat-card">
+
+    <!-- Card Header -->
+
+    <div class="stat-header">
+
+        <div class="stat-info">
+
+            <span class="stat-title">
+                {{ title }}
+            </span>
+
+            <h2 class="stat-value">
+                {{ value }}
+            </h2>
+
+        </div>
+
+        <div class="stat-icon">
+
+            <i class="{{ icon }}"></i>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+
+    <div class="stat-footer">
+
+        <span class="stat-change
+            {% if trend == 'up' %}
+                positive
+            {% elif trend == 'down' %}
+                negative
+            {% else %}
+                neutral
+            {% endif %}
+        ">
+
+            {% if trend == "up" %}
+                ▲
+            {% elif trend == "down" %}
+                ▼
+            {% else %}
+                ●
+            {% endif %}
+
+            {{ change }}
+
+        </span>
+
+        <span class="stat-period">
+
+            vs yesterday
+
+        </span>
+
+    </div>
+
+</div>

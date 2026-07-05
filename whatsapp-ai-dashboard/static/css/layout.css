@@ -1,0 +1,14 @@
+.app-layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    min-height: 100vh;
+    transition: grid-template-columns 180ms ease;
+}
+
+.main-content {
+    min-width: 0;
+}
+
+body.sidebar-collapsed {
+    --sidebar-width: 88px;
+}

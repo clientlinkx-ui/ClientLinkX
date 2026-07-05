@@ -1,0 +1,115 @@
+<div class="conversation-item">
+
+    <!-- ========================================= -->
+    <!-- Avatar -->
+    <!-- ========================================= -->
+
+    <div class="conversation-avatar">
+
+        {% if avatar %}
+            <img src="{{ avatar }}" alt="{{ customer_name }}">
+        {% else %}
+            <div class="avatar-placeholder">
+
+                {{ customer_name[0] }}
+
+            </div>
+        {% endif %}
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Conversation Content -->
+    <!-- ========================================= -->
+
+    <div class="conversation-content">
+
+        <div class="conversation-top">
+
+            <h4 class="customer-name">
+
+                {{ customer_name }}
+
+            </h4>
+
+            <span class="conversation-time">
+
+                {{ time }}
+
+            </span>
+
+        </div>
+
+        <p class="last-message">
+
+            {{ last_message }}
+
+        </p>
+
+        <div class="conversation-meta">
+
+            <!-- Handler -->
+
+            <span class="handler">
+
+                {% if handler == "AI" %}
+
+                    <i class="fa-solid fa-robot"></i>
+                    AI
+
+                {% else %}
+
+                    <i class="fa-solid fa-user"></i>
+                    Human
+
+                {% endif %}
+
+            </span>
+
+            <!-- Status -->
+
+            <span class="conversation-status
+                {% if status == 'Active' %}
+                    active
+                {% elif status == 'Waiting' %}
+                    waiting
+                {% elif status == 'Resolved' %}
+                    resolved
+                {% else %}
+                    closed
+                {% endif %}
+            ">
+
+                {{ status }}
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Right Side -->
+    <!-- ========================================= -->
+
+    <div class="conversation-right">
+
+        {% if unread and unread > 0 %}
+
+        <span class="unread-count">
+
+            {{ unread }}
+
+        </span>
+
+        {% endif %}
+
+        <button class="conversation-menu">
+
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+
+        </button>
+
+    </div>
+
+</div>

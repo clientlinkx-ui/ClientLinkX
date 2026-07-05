@@ -1,0 +1,320 @@
+<aside class="sidebar" id="sidebar">
+
+    <!-- ========================================= -->
+    <!-- Logo -->
+    <!-- ========================================= -->
+
+    <div class="sidebar-header">
+
+        <a href="{{ url_for('dashboard') }}" class="logo">
+
+            <div class="logo-icon">
+
+                <i class="fa-brands fa-whatsapp"></i>
+
+            </div>
+
+            <div class="logo-text">
+
+                <h2>WhatsApp AI</h2>
+
+                <span>Business Suite</span>
+
+            </div>
+
+        </a>
+
+        <button class="collapse-btn" id="collapseSidebar">
+
+            <i class="fa-solid fa-bars"></i>
+
+        </button>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Workspace -->
+    <!-- ========================================= -->
+
+    <div class="workspace-card">
+
+        <div class="workspace-label">
+
+            Current Workspace
+
+        </div>
+
+        <div class="workspace-name">
+
+            <i class="fa-solid fa-building"></i>
+
+            <span>EverTech Solutions</span>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Navigation -->
+    <!-- ========================================= -->
+
+    <nav class="sidebar-nav">
+
+        <div class="nav-section">
+
+            <span class="section-title">
+
+                Overview
+
+            </span>
+
+            <ul>
+
+                <li>
+
+                    <a href="{{ url_for('dashboard') }}"
+                       class="{% if active_page == 'dashboard' %}active{% endif %}">
+
+                        <i class="fa-solid fa-chart-line"></i>
+
+                        <span>Dashboard</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="{{ url_for('conversations') }}"
+                       class="{% if active_page == 'conversations' %}active{% endif %}">
+
+                        <i class="fa-solid fa-comments"></i>
+
+                        <span>Conversations</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="{{ url_for('analytics') }}"
+                       class="{% if active_page == 'analytics' %}active{% endif %}">
+
+                        <i class="fa-solid fa-chart-column"></i>
+
+                        <span>Analytics</span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- ============================== -->
+
+        <div class="nav-section">
+
+            <span class="section-title">
+
+                AI Management
+
+            </span>
+
+            <ul>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-robot"></i>
+
+                        <span>AI Assistant</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-book"></i>
+
+                        <span>Knowledge Base</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                        <span>Prompt Builder</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-code-branch"></i>
+
+                        <span>Workflows</span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- ============================== -->
+
+        <div class="nav-section">
+
+            <span class="section-title">
+
+                Business
+
+            </span>
+
+            <ul>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-users"></i>
+
+                        <span>Customers</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-user-group"></i>
+
+                        <span>Team Members</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-credit-card"></i>
+
+                        <span>Billing</span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- ============================== -->
+
+        <div class="nav-section">
+
+            <span class="section-title">
+
+                System
+
+            </span>
+
+            <ul>
+
+                <li>
+
+                    <a href="{{ url_for('settings') }}"
+                       class="{% if active_page == 'settings' %}active{% endif %}">
+
+                        <i class="fa-solid fa-gear"></i>
+
+                        <span>Settings</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                        <span>Security</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-circle-question"></i>
+
+                        <span>Support</span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </div>
+
+    </nav>
+
+    <!-- ========================================= -->
+    <!-- Sidebar Footer -->
+    <!-- ========================================= -->
+
+    <div class="sidebar-footer">
+
+        <div class="user-profile">
+
+            <div class="user-avatar">
+
+                <img src="{{ url_for('static', filename='images/avatar.png') }}"
+                     alt="User">
+
+            </div>
+
+            <div class="user-info">
+
+                <h4>Admin</h4>
+
+                <span>System Administrator</span>
+
+            </div>
+
+            <button class="profile-menu">
+
+                <i class="fa-solid fa-chevron-up"></i>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</aside>

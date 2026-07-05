@@ -1,0 +1,297 @@
+.panel,
+.stat-card,
+.performance-card,
+.activity-item,
+.conversation-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.panel {
+    min-width: 0;
+    padding: 20px;
+}
+
+.panel-header,
+.stat-header,
+.stat-footer,
+.performance-header,
+.performance-value,
+.performance-footer,
+.conversation-item,
+.conversation-top,
+.conversation-meta,
+.activity-item,
+.activity-header {
+    display: flex;
+    align-items: center;
+}
+
+.panel-header {
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.panel-header h2,
+.performance-title h3,
+.activity-title,
+.customer-name {
+    margin: 0;
+}
+
+.panel-header h2 {
+    font-size: 1.05rem;
+}
+
+.panel-header a {
+    color: var(--primary-dark);
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.stat-card,
+.performance-card {
+    padding: 18px;
+}
+
+.stat-header,
+.stat-footer,
+.performance-header,
+.performance-footer {
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.stat-title,
+.performance-title span,
+.stat-period,
+.activity-time,
+.conversation-time,
+.module-label,
+.queue-item span,
+.health-list span,
+.model-metrics span {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.stat-value {
+    margin: 8px 0 0;
+    font-size: 1.75rem;
+    letter-spacing: 0;
+}
+
+.stat-icon,
+.performance-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+}
+
+.stat-change,
+.performance-status {
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.positive,
+.excellent,
+.good {
+    color: var(--success);
+}
+
+.negative,
+.critical {
+    color: var(--danger);
+}
+
+.neutral,
+.warning {
+    color: var(--warning);
+}
+
+.performance-value {
+    align-items: baseline;
+    gap: 6px;
+    margin: 18px 0;
+}
+
+.performance-value .value {
+    font-size: 2rem;
+    font-weight: 850;
+}
+
+.performance-value .unit {
+    color: var(--muted);
+    font-weight: 800;
+}
+
+.progress-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.progress-bar {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e8edf2;
+}
+
+.progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--primary), #25d366);
+    transition: width 700ms ease;
+}
+
+.progress-text {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.conversation-list,
+.activity-list,
+.queue-list,
+.health-list {
+    display: grid;
+    gap: 12px;
+}
+
+.conversation-item,
+.activity-item {
+    gap: 12px;
+    padding: 14px;
+    box-shadow: none;
+}
+
+.conversation-avatar,
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+}
+
+.avatar-placeholder {
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font-weight: 850;
+}
+
+.conversation-content,
+.activity-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.conversation-top,
+.activity-header {
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.customer-name,
+.activity-title {
+    font-size: 0.92rem;
+}
+
+.last-message,
+.activity-description {
+    margin: 5px 0 10px;
+    overflow: hidden;
+    color: var(--text-soft);
+    font-size: 0.86rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.conversation-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.handler,
+.conversation-status,
+.activity-status,
+.status-pill,
+.queue-total {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 24px;
+    border-radius: 999px;
+    padding: 0 9px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.handler,
+.conversation-status.resolved,
+.activity-status.done {
+    background: var(--surface-soft);
+    color: var(--text-soft);
+}
+
+.conversation-status.active,
+.status-pill.online,
+.activity-status.live {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.conversation-status.waiting,
+.activity-status.open {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.conversation-right {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+}
+
+.unread-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: white;
+    font-size: 0.76rem;
+    font-weight: 850;
+}
+
+.conversation-menu {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+}
+
+.activity-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    color: var(--primary-dark);
+}
+
+.activity-user {
+    color: var(--muted);
+    font-size: 0.8rem;
+}

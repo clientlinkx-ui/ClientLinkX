@@ -1,0 +1,99 @@
+<div class="performance-card">
+
+    <!-- ========================= -->
+    <!-- Header -->
+    <!-- ========================= -->
+
+    <div class="performance-header">
+
+        <div class="performance-title">
+
+            <h3>{{ title }}</h3>
+
+            {% if subtitle %}
+            <span>{{ subtitle }}</span>
+            {% endif %}
+
+        </div>
+
+        <div class="performance-icon">
+
+            <i class="{{ icon }}"></i>
+
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- Value -->
+    <!-- ========================= -->
+
+    <div class="performance-value">
+
+        <span class="value">
+
+            {{ value }}
+
+        </span>
+
+        {% if unit %}
+        <span class="unit">
+
+            {{ unit }}
+
+        </span>
+        {% endif %}
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- Progress -->
+    <!-- ========================= -->
+
+    <div class="progress-container">
+
+        <div class="progress-bar">
+
+            <div class="progress-fill" data-progress="{{ progress | default(0) }}"></div>
+
+        </div>
+
+        <span class="progress-text">
+
+            {{ progress }}%
+
+        </span>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- Footer -->
+    <!-- ========================= -->
+
+    <div class="performance-footer">
+
+        <span class="performance-status {% if status == 'excellent' %}excellent{% elif status == 'good' %}good{% elif status == 'warning' %}warning{% else %}critical{% endif %}">
+
+            {% if status == "excellent" %}
+                ● Excellent
+            {% elif status == "good" %}
+                ● Good
+            {% elif status == "warning" %}
+                ● Needs Attention
+            {% else %}
+                ● Critical
+            {% endif %}
+
+        </span>
+
+        {% if change %}
+        <span class="performance-change">
+
+            {{ change }}
+
+        </span>
+        {% endif %}
+
+    </div>
+
+</div>

@@ -1,0 +1,195 @@
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow-y: auto;
+    background: #0f2f2a;
+    color: #e9fbf4;
+    padding: 20px;
+}
+
+.sidebar-header,
+.logo,
+.workspace-name,
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-header {
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.logo {
+    gap: 12px;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.logo-icon,
+.user-avatar,
+.activity-icon,
+.model-icon,
+.module-icon,
+.stat-icon,
+.performance-icon {
+    display: inline-grid;
+    place-items: center;
+}
+
+.logo-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius);
+    background: #25d366;
+    color: #063f35;
+    font-size: 1.35rem;
+}
+
+.logo-text h2,
+.user-info h4 {
+    margin: 0;
+}
+
+.logo-text span,
+.workspace-label,
+.section-title,
+.user-info span {
+    color: rgba(233, 251, 244, 0.68);
+    font-size: 0.78rem;
+}
+
+.collapse-btn,
+.profile-menu {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(233, 251, 244, 0.18);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+}
+
+.workspace-card {
+    border: 1px solid rgba(233, 251, 244, 0.12);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 14px;
+}
+
+.workspace-name {
+    gap: 10px;
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.sidebar-nav {
+    display: grid;
+    gap: 20px;
+}
+
+.nav-section ul {
+    display: grid;
+    gap: 4px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.nav-section a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    border-radius: var(--radius);
+    color: rgba(233, 251, 244, 0.82);
+    padding: 0 10px;
+    text-decoration: none;
+}
+
+.nav-section a:hover,
+.nav-section a.active {
+    background: rgba(37, 211, 102, 0.14);
+    color: #ffffff;
+}
+
+.nav-section i {
+    width: 18px;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.user-profile {
+    gap: 10px;
+    border-top: 1px solid rgba(233, 251, 244, 0.12);
+    padding-top: 16px;
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #25d366;
+    color: #063f35;
+    font-weight: 800;
+}
+
+.user-avatar img {
+    display: none;
+}
+
+.user-avatar::before {
+    content: "A";
+}
+
+.user-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.sidebar.is-collapsed .logo-text,
+.sidebar.is-collapsed .workspace-card,
+.sidebar.is-collapsed .section-title,
+.sidebar.is-collapsed .nav-section span,
+.sidebar.is-collapsed .user-info,
+.sidebar.is-collapsed .profile-menu {
+    display: none;
+}
+
+.sidebar.is-collapsed {
+    align-items: center;
+    padding: 20px 14px;
+}
+
+.sidebar.is-collapsed .sidebar-header,
+.sidebar.is-collapsed .nav-section a,
+.sidebar.is-collapsed .user-profile {
+    justify-content: center;
+}
+
+.sidebar.is-collapsed .sidebar-nav {
+    width: 100%;
+}
+
+.sidebar.is-collapsed .nav-section a {
+    padding: 0;
+}
+
+.sidebar.is-collapsed .nav-section i {
+    width: auto;
+}
+
+.sidebar-backdrop {
+    display: none;
+}
+
+body.sidebar-open {
+    overflow: hidden;
+}

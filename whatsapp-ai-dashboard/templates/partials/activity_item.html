@@ -1,0 +1,69 @@
+<div class="activity-item">
+
+    <!-- ========================================= -->
+    <!-- Activity Icon -->
+    <!-- ========================================= -->
+
+    <div class="activity-icon {{ activity_type|lower }}">
+
+        <i class="{{ icon }}"></i>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Activity Content -->
+    <!-- ========================================= -->
+
+    <div class="activity-content">
+
+        <div class="activity-header">
+
+            <h4 class="activity-title">
+
+                {{ title }}
+
+            </h4>
+
+            <span class="activity-time">
+
+                {{ time }}
+
+            </span>
+
+        </div>
+
+        <p class="activity-description">
+
+            {{ description }}
+
+        </p>
+
+        {% if user %}
+
+        <div class="activity-user">
+
+            <i class="fa-solid fa-user"></i>
+
+            {{ user }}
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Status Badge -->
+    <!-- ========================================= -->
+
+    {% if status %}
+
+    <div class="activity-status {{ status|lower }}">
+
+        {{ status }}
+
+    </div>
+
+    {% endif %}
+
+</div>

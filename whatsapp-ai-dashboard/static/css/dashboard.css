@@ -1,0 +1,278 @@
+.dashboard {
+    display: grid;
+    gap: 22px;
+}
+
+.overview-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(18, 140, 126, 0.18);
+    border-radius: var(--radius);
+    background:
+        linear-gradient(120deg, rgba(18, 140, 126, 0.11), rgba(37, 99, 235, 0.08)),
+        var(--surface);
+    padding: 22px;
+}
+
+.overview-copy {
+    max-width: 760px;
+}
+
+.eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--primary-dark);
+    font-size: 0.74rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.overview-copy h2 {
+    margin: 0;
+    font-size: 1.65rem;
+    letter-spacing: 0;
+}
+
+.overview-copy p {
+    max-width: 680px;
+    margin: 7px 0 0;
+    color: var(--text-soft);
+}
+
+.overview-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--primary-dark);
+    color: white;
+    padding: 0 14px;
+    font-weight: 850;
+}
+
+.stats-grid,
+.performance-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.performance-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.dashboard-grid-main {
+    grid-template-columns: minmax(0, 1.65fr) minmax(340px, 0.85fr);
+}
+
+.dashboard-grid-secondary {
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.75fr) minmax(280px, 0.75fr);
+}
+
+.dashboard-grid-lists {
+    grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+}
+
+.traffic-panel {
+    min-height: 380px;
+}
+
+.chart-frame {
+    position: relative;
+    height: 300px;
+}
+
+.chart-frame.compact {
+    height: 230px;
+}
+
+.segmented-control {
+    display: inline-grid;
+    grid-template-columns: repeat(3, 42px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 3px;
+}
+
+.segmented-control button {
+    height: 30px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 850;
+}
+
+.segmented-control button.active {
+    background: var(--surface);
+    color: var(--primary-dark);
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+.model-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.model-card {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 14px;
+}
+
+.model-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font-size: 1.3rem;
+}
+
+.model-card h3,
+.model-card p {
+    margin: 0;
+}
+
+.model-card p {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.model-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.model-metrics div,
+.health-list div,
+.queue-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.model-metrics div {
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+}
+
+.model-metrics strong {
+    font-size: 1rem;
+}
+
+.health-list {
+    margin-top: auto;
+}
+
+.health-list div,
+.queue-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+}
+
+.health-list strong {
+    font-size: 0.84rem;
+}
+
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.module-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 14px;
+}
+
+.module-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.module-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+}
+
+.module-value {
+    margin-top: 14px;
+    font-size: 1.45rem;
+    font-weight: 850;
+}
+
+.module-label {
+    display: block;
+    margin: 2px 0 12px;
+}
+
+.queue-total {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.queue-item strong,
+.queue-item span {
+    display: block;
+}
+
+.queue-item span {
+    margin-top: 3px;
+}
+
+.queue-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 42px;
+    height: 34px;
+    border-radius: var(--radius);
+    font-weight: 850;
+}
+
+.queue-count.good {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.queue-count.warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+}

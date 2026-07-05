@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}
+Analytics
+{% endblock %}
+
+{% block content %}
+<section class="work-page analytics-page">
+    <section class="analytics-hero">
+        <div>
+            <span class="eyebrow">Last 30 days</span>
+            <h2>WhatsApp AI Performance</h2>
+            <p>Track automation, escalations, intent mix, customer satisfaction, and business outcomes from a single analytics view.</p>
+        </div>
+        <div class="overview-actions">
+            <button class="icon-button" type="button" title="Download analytics"><i class="fa-solid fa-download"></i></button>
+            <button class="primary-action" type="button"><i class="fa-solid fa-calendar-days"></i> Date Range</button>
+        </div>
+    </section>
+
+    <section class="analytics-summary-grid">
+        {% for metric in summary %}
+        <article class="analytics-metric">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
+            <small class="{{ metric.tone }}">{{ metric.change }} vs previous period</small>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid analytics-chart-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Volume</span>
+                    <h2>Conversation and Escalation Trend</h2>
+                </div>
+            </div>
+            <div class="chart-frame">
+                <canvas id="analyticsVolumeChart" aria-label="Analytics volume chart"></canvas>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Intent Mix</span>
+                    <h2>Top Conversation Categories</h2>
+                </div>
+            </div>
+            <div class="chart-frame">
+                <canvas id="analyticsIntentChart" aria-label="Intent distribution chart"></canvas>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid analytics-lower-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Conversion</span>
+                    <h2>Automation Funnel</h2>
+                </div>
+            </div>
+
+            <div class="funnel-list">
+                {% for step in funnels %}
+                <div class="funnel-row">
+                    <div>
+                        <strong>{{ step.name }}</strong>
+                        <span>{{ step.value }}</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" data-progress="{{ step.progress }}"></div></div>
+                        <span class="progress-text">{{ step.progress }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Experience</span>
+                    <h2>Customer Satisfaction</h2>
+                </div>
+            </div>
+            <div class="chart-frame compact">
+                <canvas id="satisfactionChart" aria-label="Satisfaction chart"></canvas>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Demand</span>
+                    <h2>Top Intents</h2>
+                </div>
+            </div>
+
+            <div class="intent-list">
+                {% for intent in intents %}
+                <div class="intent-row">
+                    <div>
+                        <strong>{{ intent.name }}</strong>
+                        <span>{{ intent.count }} conversations</span>
+                    </div>
+                    <span>{{ intent.share }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Teams</span>
+                <h2>Human Handoff Performance</h2>
+            </div>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Resolved</th>
+                        <th>Avg SLA</th>
+                        <th>CSAT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr>
+                        <td><strong>{{ team.name }}</strong></td>
+                        <td>{{ team.resolved }}</td>
+                        <td>{{ team.avg_sla }}</td>
+                        <td>{{ team.csat }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}
