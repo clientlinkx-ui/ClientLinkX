@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}
+Team Members
+{% endblock %}
+
+{% block content %}
+<section class="work-page team-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="panel conversation-command">
+        <div class="filter-pills">
+            <button class="active" type="button">All Members</button>
+            <button type="button">Online</button>
+            <button type="button">Busy</button>
+            <button type="button">Away</button>
+        </div>
+        <div class="command-right">
+            <label class="compact-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" placeholder="Search team...">
+            </label>
+            <button class="primary-action" type="button"><i class="fa-solid fa-user-plus"></i> Invite Member</button>
+        </div>
+    </section>
+
+    <section class="dashboard-grid team-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Queues</span>
+                    <h2>Team Workload</h2>
+                </div>
+            </div>
+
+            <div class="funnel-list">
+                {% for team in teams %}
+                <div class="funnel-row">
+                    <div>
+                        <strong>{{ team.name }}</strong>
+                        <span>{{ team.members }} members · {{ team.queue }} open · SLA {{ team.sla }}</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" data-progress="{{ team.progress }}"></div></div>
+                        <span class="progress-text">{{ team.progress }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Roles</span>
+                    <h2>Permission Groups</h2>
+                </div>
+                <button class="icon-button" type="button" title="Add role"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div class="resource-list">
+                {% for role in roles %}
+                <div class="resource-card role-card">
+                    <span class="summary-icon"><i class="fa-solid fa-id-badge"></i></span>
+                    <span>
+                        <strong>{{ role.name }} · {{ role.count }}</strong>
+                        <small>{{ role.scope }}</small>
+                    </span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Roster</span>
+                <h2>Team Directory</h2>
+            </div>
+            <button class="icon-button" type="button" title="Export team"><i class="fa-solid fa-download"></i></button>
+        </div>
+
+        <div class="member-grid">
+            {% for member in members %}
+            <article class="member-card">
+                <div class="member-card-top">
+                    <span class="avatar-placeholder">{{ member.name[0] }}</span>
+                    <span class="member-status {{ member.status|lower }}">{{ member.status }}</span>
+                </div>
+                <h3>{{ member.name }}</h3>
+                <p>{{ member.role }} · {{ member.team }}</p>
+                <div class="profile-stats">
+                    <div>
+                        <span>Assigned</span>
+                        <strong>{{ member.assigned }}</strong>
+                    </div>
+                    <div>
+                        <span>Resolved</span>
+                        <strong>{{ member.resolved }}</strong>
+                    </div>
+                    <div>
+                        <span>CSAT</span>
+                        <strong>{{ member.csat }}</strong>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Performance</span>
+                <h2>Assignment Table</h2>
+            </div>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Team</th>
+                        <th>Status</th>
+                        <th>Assigned</th>
+                        <th>Resolved</th>
+                        <th>CSAT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td><strong>{{ member.name }}</strong></td>
+                        <td>{{ member.role }}</td>
+                        <td>{{ member.team }}</td>
+                        <td><span class="member-status {{ member.status|lower }}">{{ member.status }}</span></td>
+                        <td>{{ member.assigned }}</td>
+                        <td>{{ member.resolved }}</td>
+                        <td>{{ member.csat }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

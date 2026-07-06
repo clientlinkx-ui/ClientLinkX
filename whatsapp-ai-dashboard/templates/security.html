@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}
+Security
+{% endblock %}
+
+{% block content %}
+<section class="work-page security-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid security-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Access</span>
+                    <h2>Security Policies</h2>
+                </div>
+                <button class="primary-action" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Policies</button>
+            </div>
+
+            <div class="rules-grid">
+                {% for rule in access_rules %}
+                <label class="toggle-row">
+                    <span>
+                        <strong>{{ rule.name }}</strong>
+                        <small>{{ rule.detail }}</small>
+                    </span>
+                    <input type="checkbox" {% if rule.enabled %}checked{% endif %}>
+                </label>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Compliance</span>
+                    <h2>Data Protection</h2>
+                </div>
+            </div>
+
+            <div class="funnel-list">
+                {% for item in compliance %}
+                <div class="funnel-row security-progress-row">
+                    <div>
+                        <strong>{{ item.name }}</strong>
+                        <span>{{ item.value }}</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" data-progress="{{ item.progress }}"></div></div>
+                        <span class="progress-text">{{ item.progress }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid support-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Roles</span>
+                    <h2>Workspace Permissions</h2>
+                </div>
+                <button class="icon-button" type="button" title="Add role"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Users</th>
+                            <th>Permissions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in roles %}
+                        <tr>
+                            <td><strong>{{ role.role }}</strong></td>
+                            <td>{{ role.users }}</td>
+                            <td>{{ role.permissions }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Controls</span>
+                    <h2>Session Settings</h2>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Session timeout</span>
+                    <select>
+                        <option selected>30 minutes</option>
+                        <option>1 hour</option>
+                        <option>4 hours</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Export approval</span>
+                    <select>
+                        <option selected>Admin approval required</option>
+                        <option>Owner approval required</option>
+                        <option>Disabled</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Allowed login region</span>
+                    <select>
+                        <option selected>India</option>
+                        <option>India and UAE</option>
+                        <option>Global</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Conversation retention</span>
+                    <select>
+                        <option selected>180 days</option>
+                        <option>90 days</option>
+                        <option>365 days</option>
+                    </select>
+                </label>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Audit</span>
+                <h2>Recent Security Events</h2>
+            </div>
+            <button class="icon-button" type="button" title="Export audit log"><i class="fa-solid fa-download"></i></button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>User</th>
+                        <th>IP Address</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td><strong>{{ log.event }}</strong></td>
+                        <td>{{ log.user }}</td>
+                        <td>{{ log.ip }}</td>
+                        <td>{{ log.time }}</td>
+                        <td><span class="settings-badge {% if log.status == 'Challenged' %}warning{% else %}good{% endif %}">{{ log.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

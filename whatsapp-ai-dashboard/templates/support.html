@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}
+Support
+{% endblock %}
+
+{% block content %}
+<section class="work-page support-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid support-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Help Desk</span>
+                    <h2>Support Tickets</h2>
+                </div>
+                <button class="primary-action" type="button"><i class="fa-solid fa-plus"></i> New Ticket</button>
+            </div>
+
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket</th>
+                            <th>Priority</th>
+                            <th>Owner</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td>
+                                <strong>{{ ticket.id }}</strong>
+                                <span>{{ ticket.subject }}</span>
+                            </td>
+                            <td><span class="thread-priority {{ ticket.priority|lower }}">{{ ticket.priority }}</span></td>
+                            <td>{{ ticket.owner }}</td>
+                            <td><span class="settings-badge {% if ticket.status == 'Resolved' %}good{% elif ticket.status == 'Open' %}warning{% else %}neutral-badge{% endif %}">{{ ticket.status }}</span></td>
+                            <td>{{ ticket.updated }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Status</span>
+                    <h2>Platform Health</h2>
+                </div>
+                <span class="status-pill online">All systems healthy</span>
+            </div>
+
+            <div class="connection-list">
+                {% for check in status_checks %}
+                <div class="connection-item">
+                    <div>
+                        <strong>{{ check.name }}</strong>
+                        <span>{{ check.detail }}</span>
+                    </div>
+                    <span class="settings-badge good">{{ check.status }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid support-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Request</span>
+                    <h2>Contact Support</h2>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Request type</span>
+                    <select>
+                        <option selected>Technical support</option>
+                        <option>Workflow change</option>
+                        <option>Billing</option>
+                        <option>Onboarding</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Priority</span>
+                    <select>
+                        <option selected>Normal</option>
+                        <option>High</option>
+                        <option>Urgent</option>
+                    </select>
+                </label>
+                <label class="field full-field">
+                    <span>Subject</span>
+                    <input type="text" value="Need help with WhatsApp chatbot setup">
+                </label>
+                <label class="field full-field">
+                    <span>Description</span>
+                    <textarea rows="5">Describe the issue, affected module, and any customer examples.</textarea>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="icon-button" type="button" title="Attach file"><i class="fa-solid fa-paperclip"></i></button>
+                <button class="primary-action" type="button"><i class="fa-solid fa-paper-plane"></i> Submit Request</button>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Resources</span>
+                    <h2>Help Center</h2>
+                </div>
+            </div>
+
+            <div class="resource-list">
+                {% for resource in resources %}
+                <a class="resource-card" href="#">
+                    <span class="summary-icon"><i class="{{ resource.icon }}"></i></span>
+                    <span>
+                        <strong>{{ resource.title }}</strong>
+                        <small>{{ resource.detail }}</small>
+                    </span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+</section>
+{% endblock %}

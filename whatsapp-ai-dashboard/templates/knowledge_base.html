@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}
+Knowledge Base
+{% endblock %}
+
+{% block content %}
+<section class="work-page knowledge-page">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="flash-stack">
+        {% for category, message in messages %}
+        <div class="settings-badge {% if category == 'good' %}good{% else %}warning{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endwith %}
+
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid knowledge-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Sources</span>
+                    <h2>Connected Knowledge Sources</h2>
+                </div>
+                <button class="primary-action" id="addKnowledgeSource" type="button"><i class="fa-solid fa-plus"></i> Add Source</button>
+            </div>
+
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Documents</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for source in sources %}
+                        <tr>
+                            <td><strong>{{ source.name }}</strong></td>
+                            <td>{{ source.type }}</td>
+                            <td>{{ source.documents }}</td>
+                            <td><span class="settings-badge {% if source.status == 'Synced' %}good{% else %}warning{% endif %}">{{ source.status }}</span></td>
+                            <td>{{ source.updated }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Knowledge</span>
+                    <h2>Add AI Context</h2>
+                </div>
+            </div>
+
+            <form class="form-grid knowledge-entry-form" action="{{ url_for('create_knowledge_entry') }}" method="post">
+                <label class="field">
+                    <span>Title</span>
+                    <input name="title" type="text" placeholder="Refund policy for delayed orders" required>
+                </label>
+                <label class="field">
+                    <span>Category</span>
+                    <select name="category" required>
+                        <option selected>Support</option>
+                        <option>Sales</option>
+                        <option>Admissions</option>
+                        <option>Appointments</option>
+                        <option>Orders</option>
+                        <option>Billing</option>
+                        <option>Transport</option>
+                    </select>
+                </label>
+                <label class="field full-field">
+                    <span>Knowledge content</span>
+                    <textarea name="content" rows="7" placeholder="Write the exact policy, process, answer, or instructions the AI should use." required></textarea>
+                </label>
+                <label class="field full-field">
+                    <span>Tags</span>
+                    <input name="tags" type="text" placeholder="refund, delayed order, escalation">
+                </label>
+                <div class="form-actions full-field">
+                    <button class="primary-action" type="submit"><i class="fa-solid fa-database"></i> Save to Knowledge Base</button>
+                </div>
+            </form>
+        </article>
+    </section>
+
+    <section class="panel" id="knowledgeDocumentImporter">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Documents</span>
+                <h2>Import Documents</h2>
+            </div>
+            <span class="settings-badge neutral-badge">PDF, Word, Spreadsheets</span>
+        </div>
+
+        <form class="knowledge-upload-form" action="{{ url_for('upload_knowledge_documents') }}" method="post" enctype="multipart/form-data">
+            <label class="upload-zone file-upload-zone">
+                <span class="summary-icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+                <strong>Select documents</strong>
+                <span>Upload PDF, DOC, DOCX, XLS, XLSX, CSV, PPT, or text files.</span>
+                <input name="documents" type="file" multiple accept=".txt,.md,.markdown,.csv,.json,.html,.htm,.xml,.rtf,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+            </label>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Category</span>
+                    <select name="category">
+                        <option selected>General</option>
+                        <option>Support</option>
+                        <option>Sales</option>
+                        <option>Admissions</option>
+                        <option>Appointments</option>
+                        <option>Orders</option>
+                        <option>Billing</option>
+                        <option>Transport</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Tags</span>
+                    <input name="tags" type="text" placeholder="policy, faq, pricing">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="primary-action" type="submit"><i class="fa-solid fa-database"></i> Import to Knowledge Base</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">AI Context</span>
+                <h2>Saved Knowledge Entries</h2>
+            </div>
+            <span class="settings-badge good">{{ entries|length }} published</span>
+        </div>
+
+        <div class="knowledge-entry-list">
+            {% for entry in entries %}
+            <article class="knowledge-entry-card">
+                <div>
+                    <span class="settings-badge neutral-badge">{{ entry.category }}</span>
+                    <h3>{{ entry.title }}</h3>
+                    <p>{{ entry.content }}</p>
+                    {% if entry.tags %}
+                    <small>{{ entry.tags }}</small>
+                    {% endif %}
+                </div>
+                <div class="entry-actions">
+                    <button class="settings-badge {% if entry.status == 'Published' %}good{% else %}neutral-badge{% endif %} knowledge-status" data-id="{{ entry.id }}" data-status="{{ entry.status }}" type="button">{{ entry.status }}</button>
+                    <button class="icon-button delete-knowledge-entry" data-id="{{ entry.id }}" type="button" title="Delete entry"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </article>
+            {% else %}
+            <div class="upload-zone">
+                <span class="summary-icon"><i class="fa-solid fa-book-open"></i></span>
+                <strong>No entries yet</strong>
+                <span>Add policies, FAQs, procedures, pricing notes, or product details for the AI simulator.</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-grid knowledge-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Coverage</span>
+                    <h2>Answer Coverage by Module</h2>
+                </div>
+            </div>
+
+            <div class="funnel-list">
+                {% for item in coverage %}
+                <div class="funnel-row">
+                    <div>
+                        <strong>{{ item.name }}</strong>
+                        <span>{{ item.value }} grounded answers</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" data-progress="{{ item.progress }}"></div></div>
+                        <span class="progress-text">{{ item.progress }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Sync</span>
+                    <h2>Sync Settings</h2>
+                </div>
+                <button class="icon-button" id="syncKnowledgeBase" type="button" title="Save settings and run sync"><i class="fa-solid fa-rotate"></i></button>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Sync frequency</span>
+                    <select id="kbSyncFrequency">
+                        <option {% if sync_settings.frequency == 'Every 6 hours' %}selected{% endif %}>Every 6 hours</option>
+                        <option {% if sync_settings.frequency == 'Every hour' %}selected{% endif %}>Every hour</option>
+                        <option {% if sync_settings.frequency == 'Daily' %}selected{% endif %}>Daily</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Approval mode</span>
+                    <select id="kbApprovalMode">
+                        <option {% if sync_settings.approval_mode == 'Review before publish' %}selected{% endif %}>Review before publish</option>
+                        <option {% if sync_settings.approval_mode == 'Auto-publish trusted sources' %}selected{% endif %}>Auto-publish trusted sources</option>
+                    </select>
+                </label>
+                <label class="toggle-row full-field">
+                    <span>
+                        <strong>Notify admins on failed sync</strong>
+                        <small>Send alerts when a source cannot be refreshed.</small>
+                    </span>
+                    <input id="kbNotifyFailures" type="checkbox" {% if sync_settings.notify_failures %}checked{% endif %}>
+                </label>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Gaps</span>
+                <h2>Knowledge Gaps</h2>
+            </div>
+            <button class="icon-button" id="exportKnowledgeGaps" type="button" title="Export gaps"><i class="fa-solid fa-download"></i></button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Topic</th>
+                        <th>Impact</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gap in gaps %}
+                    <tr>
+                        <td><strong>{{ gap.topic }}</strong></td>
+                        <td>{{ gap.impact }}</td>
+                        <td>{{ gap.owner }}</td>
+                        <td><span class="settings-badge {% if gap.status == 'Needs source' %}warning{% else %}neutral-badge{% endif %}">{{ gap.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

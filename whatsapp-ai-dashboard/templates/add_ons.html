@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add-on Modules
+{% endblock %}
+
+{% block content %}
+<section class="work-page add-ons-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid add-on-hero-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Marketplace</span>
+                    <h2>Recommended Add-ons</h2>
+                </div>
+                <button class="icon-button" type="button" title="Filter add-ons"><i class="fa-solid fa-sliders"></i></button>
+            </div>
+
+            <div class="addon-card-grid">
+                {% for module in featured %}
+                <article class="addon-card">
+                    <div class="addon-card-top">
+                        <span class="summary-icon"><i class="{{ module.icon }}"></i></span>
+                        <span class="settings-badge {% if module.status == 'Recommended' %}warning{% else %}neutral-badge{% endif %}">{{ module.status }}</span>
+                    </div>
+                    <span class="addon-category">{{ module.category }}</span>
+                    <h3>{{ module.name }}</h3>
+                    <p>{{ module.description }}</p>
+                    <strong class="price-line">{{ module.price }}</strong>
+                    <ul class="addon-feature-list">
+                        {% for feature in module.features %}
+                        <li><i class="fa-solid fa-check"></i>{{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+                    <button class="primary-action addon-action" type="button"><i class="fa-solid fa-cart-plus"></i> Add to Subscription</button>
+                </article>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Checkout</span>
+                    <h2>Subscription Estimate</h2>
+                </div>
+                <span class="status-pill online">Auto-renew</span>
+            </div>
+
+            <div class="purchase-summary">
+                {% for item in estimate %}
+                <div class="estimate-row {% if loop.last %}total{% endif %}">
+                    <span>{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="payment-card addon-payment-card">
+                <span class="summary-icon"><i class="fa-brands fa-cc-visa"></i></span>
+                <div>
+                    <strong>Visa ending 4242</strong>
+                    <span>New modules activate after purchase approval</span>
+                </div>
+            </div>
+
+            <div class="form-actions addon-checkout-actions">
+                <button class="icon-button" type="button" title="Download quote"><i class="fa-solid fa-download"></i></button>
+                <button class="primary-action" type="button"><i class="fa-solid fa-lock"></i> Purchase Add-ons</button>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid add-on-hero-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Recommendations</span>
+                    <h2>Best Fit by Business Type</h2>
+                </div>
+            </div>
+
+            <div class="funnel-list">
+                {% for item in industries %}
+                <div class="funnel-row">
+                    <div>
+                        <strong>{{ item.name }}</strong>
+                        <span>{{ item.modules }}</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" data-progress="{{ item.progress }}"></div></div>
+                        <span class="progress-text">{{ item.progress }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Installed</span>
+                    <h2>Active Add-ons</h2>
+                </div>
+            </div>
+
+            <div class="connection-list">
+                {% for module in installed %}
+                <div class="connection-item">
+                    <div>
+                        <strong>{{ module.name }}</strong>
+                        <span>{{ module.owner }} - renews {{ module.renewal }}</span>
+                    </div>
+                    <span class="settings-badge good">{{ module.usage }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Catalog</span>
+                <h2>All Add-on Modules</h2>
+            </div>
+            <button class="primary-action" type="button"><i class="fa-solid fa-layer-group"></i> Compare Modules</button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Category</th>
+                        <th>Best Fit</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for module in marketplace %}
+                    <tr>
+                        <td><strong>{{ module.name }}</strong></td>
+                        <td>{{ module.category }}</td>
+                        <td>{{ module.fit }}</td>
+                        <td>{{ module.price }}</td>
+                        <td>
+                            <span class="settings-badge {% if module.status == 'Installed' %}good{% elif module.status == 'Recommended' %}warning{% else %}neutral-badge{% endif %}">
+                                {{ module.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="table-action" type="button">
+                                {% if module.status == 'Installed' %}Manage{% else %}Add{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

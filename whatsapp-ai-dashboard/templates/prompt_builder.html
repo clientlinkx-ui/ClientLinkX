@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}
+Prompt Builder
+{% endblock %}
+
+{% block content %}
+<section class="work-page prompt-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid prompt-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Editor</span>
+                    <h2 id="promptEditorTitle">Prompt Editor</h2>
+                </div>
+                <div class="detail-actions">
+                    <button class="icon-button" id="previewPrompt" type="button" title="Preview prompt"><i class="fa-solid fa-eye"></i></button>
+                    <button class="primary-action" id="savePrompt" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Prompt name</span>
+                    <input id="promptName" type="text">
+                </label>
+                <label class="field">
+                    <span>Target module</span>
+                    <select id="promptModule">
+                        <option>Support</option>
+                        <option>Sales</option>
+                        <option>Admissions</option>
+                        <option>Orders</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Version label</span>
+                    <input id="promptVersion" type="text" placeholder="v1.0">
+                </label>
+                <label class="field">
+                    <span>Deployment target</span>
+                    <select id="promptTarget">
+                        <option>Staging</option>
+                        <option>Production</option>
+                    </select>
+                </label>
+                <label class="field full-field">
+                    <span>Prompt instructions</span>
+                    <textarea id="promptInstructions" rows="10"></textarea>
+                </label>
+                <div class="form-actions full-field"><span class="settings-badge neutral-badge" id="promptStatus">Select a prompt or create one</span><button class="secondary-action" id="publishPrompt" type="button"><i class="fa-solid fa-rocket"></i> Publish</button></div>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Library</span>
+                    <h2>Prompt Versions</h2>
+                </div>
+                <button class="icon-button" id="newPrompt" type="button" title="Create prompt"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div class="resource-list">
+                {% for prompt in prompts %}
+                <button class="resource-card role-card selectable-resource prompt-resource" type="button" data-prompt='{{ prompt|tojson }}'>
+                    <span class="summary-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    <span>
+                        <strong>{{ prompt.name }}</strong>
+                        <small>{{ prompt.module }} - {{ prompt.version }} - {{ prompt.pass_rate }}% pass rate</small>
+                    </span>
+                    <span class="settings-badge {% if prompt.status == 'Live' %}good{% elif prompt.status == 'Draft' %}neutral-badge{% else %}warning{% endif %}">{{ prompt.status }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid prompt-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Context</span>
+                    <h2>Prompt Variables</h2>
+                </div>
+            </div>
+
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Source</th>
+                            <th>Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for variable in variables %}
+                        <tr>
+                            <td><strong>{{ variable.name }}</strong></td>
+                            <td>{{ variable.source }}</td>
+                            <td><span class="settings-badge {% if variable.required %}good{% else %}neutral-badge{% endif %}">{% if variable.required %}Required{% else %}Optional{% endif %}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Test</span>
+                    <h2>Prompt Simulator</h2>
+                </div>
+            </div>
+
+            <div class="message-timeline" id="promptTestMessages">
+            </div>
+
+            <div class="reply-box">
+                <input id="promptTestInput" type="text" placeholder="Run a test message...">
+                <button class="primary-action" id="runPromptTest" type="button"><i class="fa-solid fa-play"></i> Test</button>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Evaluation</span>
+                <h2>Prompt Test Suite</h2>
+            </div>
+            <button class="icon-button" id="runPromptSuite" type="button" title="Run suite"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Case</th>
+                        <th>Intent</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in tests %}
+                    <tr>
+                        <td><strong>{{ test.case }}</strong></td>
+                        <td>{{ test.intent }}</td>
+                        <td><span class="settings-badge {% if test.result == 'Passed' %}good{% else %}warning{% endif %}">{{ test.result }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

@@ -231,6 +231,19 @@
     margin: 16px 0;
 }
 
+.simulator-config {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.simulator-timeline {
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
 .message-bubble {
     max-width: 78%;
     border-radius: var(--radius);
@@ -246,6 +259,9 @@
 .message-bubble p {
     margin: 5px 0 0;
     color: var(--text-soft);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.55;
 }
 
 .message-bubble.inbound {
@@ -369,6 +385,23 @@
     grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr) minmax(280px, 0.7fr);
 }
 
+.security-grid,
+.support-grid,
+.customer-grid,
+.team-grid,
+.billing-grid,
+.add-on-hero-grid,
+.ai-grid,
+.knowledge-grid,
+.prompt-grid,
+.workflow-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+}
+
+.customer-grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.8fr) minmax(300px, 0.75fr);
+}
+
 .funnel-row {
     display: grid;
     grid-template-columns: minmax(0, 0.85fr) minmax(180px, 1fr);
@@ -383,15 +416,498 @@
     gap: 12px;
 }
 
+.security-progress-row {
+    grid-template-columns: minmax(0, 0.75fr) minmax(180px, 1fr);
+}
+
+.neutral-badge {
+    background: var(--surface-soft);
+    color: var(--text-soft);
+}
+
+.full-field {
+    grid-column: 1 / -1;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.resource-list {
+    display: grid;
+    gap: 10px;
+}
+
+.resource-card {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    color: var(--text);
+    padding: 13px;
+    text-decoration: none;
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.resource-card.selected {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    padding: 0 14px;
+    font-weight: 800;
+}
+
+.entry-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.entry-actions .settings-badge {
+    border: 0;
+    cursor: pointer;
+}
+
+.resource-card:hover {
+    border-color: rgba(18, 140, 126, 0.32);
+    background: var(--primary-soft);
+}
+
+.resource-card strong,
+.resource-card small {
+    display: block;
+}
+
+.resource-card small {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.profile-stats div {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 12px;
+}
+
+.profile-stats span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.profile-stats strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 1.1rem;
+}
+
+.member-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.member-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 14px;
+}
+
+.member-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.member-card h3 {
+    margin: 12px 0 4px;
+    font-size: 0.98rem;
+}
+
+.member-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.member-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--text-soft);
+    padding: 0 9px;
+    font-size: 0.75rem;
+    font-weight: 850;
+}
+
+.member-status.online {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.member-status.busy {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.member-status.away {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.role-card {
+    cursor: default;
+}
+
+.plan-price {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 16px;
+}
+
+.plan-price strong {
+    display: block;
+    font-size: 2rem;
+}
+
+.plan-price span,
+.payment-card span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.plan-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.plan-feature-grid div,
+.payment-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 12px;
+}
+
+.plan-feature-grid i {
+    color: var(--success);
+    margin-right: 8px;
+}
+
+.payment-card {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.table-action {
+    min-height: 30px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    color: var(--primary-dark);
+    padding: 0 10px;
+    font-size: 0.78rem;
+    font-weight: 850;
+}
+
+.addon-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.addon-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 15px;
+}
+
+.addon-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.addon-category {
+    display: block;
+    margin-top: 12px;
+    color: var(--primary-dark);
+    font-size: 0.78rem;
+    font-weight: 850;
+}
+
+.addon-card h3 {
+    margin: 6px 0;
+    font-size: 1rem;
+}
+
+.addon-card p {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+.price-line {
+    display: block;
+    margin: 14px 0 10px;
+    font-size: 1.12rem;
+}
+
+.addon-feature-list {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.addon-feature-list li {
+    color: var(--text-soft);
+    font-size: 0.82rem;
+}
+
+.addon-feature-list i {
+    color: var(--success);
+    margin-right: 8px;
+}
+
+.addon-action {
+    width: 100%;
+    margin-top: auto;
+    justify-content: center;
+}
+
+.purchase-summary {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.estimate-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 12px;
+}
+
+.estimate-row span {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.estimate-row.total {
+    background: var(--primary-soft);
+    border-color: rgba(18, 140, 126, 0.28);
+}
+
+.estimate-row.total strong {
+    color: var(--primary-dark);
+}
+
+.addon-payment-card {
+    margin-top: 4px;
+}
+
+.addon-checkout-actions {
+    justify-content: stretch;
+}
+
+.addon-checkout-actions .primary-action {
+    flex: 1;
+    justify-content: center;
+}
+
+.upload-zone {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 28px;
+    text-align: center;
+}
+
+.upload-zone span:not(.summary-icon) {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.flash-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.knowledge-upload-form {
+    display: grid;
+    gap: 14px;
+}
+
+.file-upload-zone {
+    cursor: pointer;
+}
+
+.file-upload-zone input[type="file"] {
+    width: min(100%, 420px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-soft);
+    padding: 10px;
+}
+
+.knowledge-entry-form textarea {
+    resize: vertical;
+}
+
+.knowledge-entry-list {
+    display: grid;
+    gap: 12px;
+}
+
+.knowledge-entry-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: start;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 14px;
+}
+
+.knowledge-entry-card h3 {
+    margin: 10px 0 6px;
+    font-size: 1rem;
+}
+
+.knowledge-entry-card p {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.5;
+}
+
+.knowledge-entry-card small {
+    display: block;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.workflow-diagram {
+    display: grid;
+    gap: 12px;
+}
+
+.workflow-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 13px;
+}
+
+.workflow-step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 33px;
+    bottom: -13px;
+    width: 2px;
+    height: 12px;
+    background: var(--border);
+}
+
+.workflow-step strong,
+.workflow-step span:not(.summary-icon) {
+    display: block;
+}
+
+.workflow-step span:not(.summary-icon) {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
 @media (max-width: 1180px) {
     .conversation-workspace,
     .analytics-chart-grid,
-    .analytics-lower-grid {
+    .analytics-lower-grid,
+    .security-grid,
+    .support-grid,
+    .customer-grid,
+    .team-grid,
+    .billing-grid,
+    .add-on-hero-grid,
+    .ai-grid,
+    .knowledge-grid,
+    .prompt-grid,
+    .workflow-grid,
+    .addon-card-grid {
         grid-template-columns: 1fr;
     }
 
     .summary-grid,
     .analytics-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .member-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -406,7 +922,8 @@
     .command-right,
     .analytics-hero,
     .customer-strip,
-    .reply-box {
+    .reply-box,
+    .form-actions {
         align-items: stretch;
         flex-direction: column;
     }
@@ -420,6 +937,23 @@
     }
 
     .funnel-row {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-stats,
+    .member-grid,
+    .plan-feature-grid,
+    .simulator-config {
+        grid-template-columns: 1fr;
+    }
+
+    .addon-card-top,
+    .estimate-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .knowledge-entry-card {
         grid-template-columns: 1fr;
     }
 }

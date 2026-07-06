@@ -127,7 +127,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('ai_assistant') }}"
+                       class="{% if active_page == 'ai_assistant' %}active{% endif %}">
 
                         <i class="fa-solid fa-robot"></i>
 
@@ -139,7 +140,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('knowledge_base') }}"
+                       class="{% if active_page == 'knowledge_base' %}active{% endif %}">
 
                         <i class="fa-solid fa-book"></i>
 
@@ -151,7 +153,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('prompt_builder') }}"
+                       class="{% if active_page == 'prompt_builder' %}active{% endif %}">
 
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
 
@@ -163,7 +166,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('workflows') }}"
+                       class="{% if active_page == 'workflows' %}active{% endif %}">
 
                         <i class="fa-solid fa-code-branch"></i>
 
@@ -191,7 +195,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('customers') }}"
+                       class="{% if active_page == 'customers' %}active{% endif %}">
 
                         <i class="fa-solid fa-users"></i>
 
@@ -203,7 +208,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('team_members') }}"
+                       class="{% if active_page == 'team_members' %}active{% endif %}">
 
                         <i class="fa-solid fa-user-group"></i>
 
@@ -215,11 +221,25 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('billing') }}"
+                       class="{% if active_page == 'billing' %}active{% endif %}">
 
                         <i class="fa-solid fa-credit-card"></i>
 
                         <span>Billing</span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="{{ url_for('add_ons') }}"
+                       class="{% if active_page == 'add_ons' %}active{% endif %}">
+
+                        <i class="fa-solid fa-puzzle-piece"></i>
+
+                        <span>Add-ons</span>
 
                     </a>
 
@@ -256,7 +276,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('security') }}"
+                       class="{% if active_page == 'security' %}active{% endif %}">
 
                         <i class="fa-solid fa-shield-halved"></i>
 
@@ -268,7 +289,8 @@
 
                 <li>
 
-                    <a href="#">
+                    <a href="{{ url_for('support') }}"
+                       class="{% if active_page == 'support' %}active{% endif %}">
 
                         <i class="fa-solid fa-circle-question"></i>
 

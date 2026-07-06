@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}
+Customers
+{% endblock %}
+
+{% block content %}
+<section class="work-page customers-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="panel conversation-command">
+        <div class="filter-pills">
+            <button class="active" type="button">All Customers</button>
+            <button type="button">High Intent</button>
+            <button type="button">At Risk</button>
+            <button type="button">New Leads</button>
+        </div>
+        <div class="command-right">
+            <label class="compact-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" placeholder="Search customers...">
+            </label>
+            <button class="primary-action" type="button"><i class="fa-solid fa-user-plus"></i> Add Customer</button>
+        </div>
+    </section>
+
+    <section class="dashboard-grid customer-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Segments</span>
+                    <h2>Customer Groups</h2>
+                </div>
+            </div>
+
+            <div class="funnel-list">
+                {% for segment in segments %}
+                <div class="funnel-row">
+                    <div>
+                        <strong>{{ segment.name }}</strong>
+                        <span>{{ segment.value }} contacts</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" data-progress="{{ segment.progress }}"></div></div>
+                        <span class="progress-text">{{ segment.progress }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel customer-profile-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Profile</span>
+                    <h2>Rahul Shah</h2>
+                </div>
+                <span class="settings-badge warning">High intent</span>
+            </div>
+
+            <div class="customer-strip">
+                <span class="avatar-placeholder">R</span>
+                <div>
+                    <strong>+91 98199 72101</strong>
+                    <span>Enterprise lead · Sales Team A · Last seen 31m ago</span>
+                </div>
+            </div>
+
+            <div class="profile-stats">
+                <div>
+                    <span>Conversations</span>
+                    <strong>22</strong>
+                </div>
+                <div>
+                    <span>CSAT</span>
+                    <strong>96%</strong>
+                </div>
+                <div>
+                    <span>Pipeline value</span>
+                    <strong>Rs 4.8L</strong>
+                </div>
+            </div>
+
+            <div class="insight-card">
+                <strong>Next best action</strong>
+                <span>Assign a sales owner and send enterprise pricing calendar link within 10 minutes.</span>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Timeline</span>
+                    <h2>Recent Customer Activity</h2>
+                </div>
+            </div>
+
+            <div class="activity-list">
+                {% for event in timeline %}
+                <div class="activity-item">
+                    <div class="activity-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="activity-content">
+                        <div class="activity-header">
+                            <h4 class="activity-title">{{ event.title }}</h4>
+                            <span class="activity-time">{{ event.time }}</span>
+                        </div>
+                        <p class="activity-description">{{ event.customer }}</p>
+                    </div>
+                    <span class="activity-status {% if event.status == 'Open' %}open{% else %}done{% endif %}">{{ event.status }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">CRM</span>
+                <h2>Customer Directory</h2>
+            </div>
+            <button class="icon-button" type="button" title="Export customers"><i class="fa-solid fa-download"></i></button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Segment</th>
+                        <th>Stage</th>
+                        <th>Last Seen</th>
+                        <th>CSAT</th>
+                        <th>Health</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <strong>{{ customer.name }}</strong>
+                            <span>{{ customer.phone }}</span>
+                        </td>
+                        <td>{{ customer.segment }}</td>
+                        <td>{{ customer.stage }}</td>
+                        <td>{{ customer.last_seen }}</td>
+                        <td>{{ customer.csat }}</td>
+                        <td>
+                            <span class="settings-badge {% if customer.health == 'At risk' %}warning{% elif customer.health == 'Good' %}good{% else %}neutral-badge{% endif %}">{{ customer.health }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

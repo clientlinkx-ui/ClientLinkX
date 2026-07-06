@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}
+Billing
+{% endblock %}
+
+{% block content %}
+<section class="work-page billing-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid billing-grid">
+        <article class="panel plan-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Subscription</span>
+                    <h2>Growth Plan</h2>
+                </div>
+                <span class="status-pill online">Active</span>
+            </div>
+
+            <div class="plan-price">
+                <strong>Rs 84,200</strong>
+                <span>per month - renews on August 1, 2026</span>
+            </div>
+
+            <div class="plan-feature-grid">
+                <div><i class="fa-solid fa-check"></i> 25,000 conversations</div>
+                <div><i class="fa-solid fa-check"></i> 200,000 AI messages</div>
+                <div><i class="fa-solid fa-check"></i> 100 team seats</div>
+                <div><i class="fa-solid fa-check"></i> Advanced routing</div>
+            </div>
+
+            <div class="form-actions">
+                <button class="icon-button" type="button" title="Download plan"><i class="fa-solid fa-download"></i></button>
+                <button class="primary-action" type="button"><i class="fa-solid fa-arrow-up-right-dots"></i> Upgrade Plan</button>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Payment</span>
+                    <h2>Payment Method</h2>
+                </div>
+                <button class="icon-button" type="button" title="Edit payment method"><i class="fa-solid fa-pen"></i></button>
+            </div>
+
+            <div class="payment-card">
+                <span class="summary-icon"><i class="fa-brands fa-cc-visa"></i></span>
+                <div>
+                    <strong>Visa ending 4242</strong>
+                    <span>Expires 09/29 · Auto-pay enabled</span>
+                </div>
+            </div>
+
+            <div class="connection-list">
+                {% for contact in contacts %}
+                <div class="connection-item">
+                    <div>
+                        <strong>{{ contact.name }}</strong>
+                        <span>{{ contact.email }}</span>
+                    </div>
+                    <span class="settings-badge neutral-badge">{{ contact.role }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid billing-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Usage</span>
+                    <h2>Current Cycle</h2>
+                </div>
+            </div>
+
+            <div class="funnel-list">
+                {% for item in usage %}
+                <div class="funnel-row">
+                    <div>
+                        <strong>{{ item.name }}</strong>
+                        <span>{{ item.value }}</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" data-progress="{{ item.progress }}"></div></div>
+                        <span class="progress-text">{{ item.progress }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Add-ons</span>
+                    <h2>Billing Add-ons</h2>
+                </div>
+            </div>
+
+            <div class="module-settings-list">
+                {% for add_on in add_ons %}
+                <label class="module-setting-card">
+                    <span>
+                        <strong>{{ add_on.name }}</strong>
+                        <small>{{ add_on.detail }} - {{ add_on.price }}</small>
+                    </span>
+                    <input type="checkbox" {% if add_on.enabled %}checked{% endif %}>
+                </label>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">History</span>
+                <h2>Invoices</h2>
+            </div>
+            <button class="icon-button" type="button" title="Export invoices"><i class="fa-solid fa-download"></i></button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Invoice</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td><strong>{{ invoice.id }}</strong></td>
+                        <td>{{ invoice.date }}</td>
+                        <td>{{ invoice.amount }}</td>
+                        <td><span class="settings-badge good">{{ invoice.status }}</span></td>
+                        <td><button class="table-action" type="button">Download</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

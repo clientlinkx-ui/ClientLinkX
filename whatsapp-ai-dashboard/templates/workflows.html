@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}
+Workflows
+{% endblock %}
+
+{% block content %}
+<section class="work-page workflows-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid workflow-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Builder</span>
+                    <h2 id="workflowEditorTitle">Workflow Builder</h2>
+                </div>
+                <div class="detail-actions"><span class="settings-badge neutral-badge" id="workflowStatus">Select a workflow</span><button class="primary-action" id="publishWorkflow" type="button"><i class="fa-solid fa-rocket"></i> Publish Workflow</button></div>
+            </div>
+
+            <div class="workflow-diagram">
+                {% for step in steps %}
+                <div class="workflow-step">
+                    <span class="summary-icon">{{ loop.index }}</span>
+                    <div>
+                        <strong>{{ step.name }}</strong>
+                        <span>{{ step.detail }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Library</span>
+                    <h2>Workflow List</h2>
+                </div>
+                <button class="icon-button" id="newWorkflow" type="button" title="Create workflow"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div class="resource-list">
+                {% for workflow in workflows %}
+                <button class="resource-card role-card selectable-resource workflow-resource" type="button" data-workflow='{{ workflow|tojson }}'>
+                    <span class="summary-icon"><i class="fa-solid fa-code-branch"></i></span>
+                    <span>
+                        <strong>{{ workflow.name }}</strong>
+                        <small>{{ workflow.trigger }} - {{ workflow.owner }} - {{ workflow.success }}% success</small>
+                    </span>
+                    <span class="settings-badge {% if workflow.status == 'Live' %}good{% else %}neutral-badge{% endif %}">{{ workflow.status }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid workflow-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Automation</span>
+                    <h2>Routing Rules</h2>
+                </div>
+            </div>
+
+            <div class="rules-grid">
+                {% for rule in rules %}
+                <label class="toggle-row">
+                    <span>
+                        <strong>{{ rule.name }}</strong>
+                        <small>{{ rule.detail }}</small>
+                    </span>
+                    <input class="workflow-rule-toggle" data-id="{{ rule.id }}" type="checkbox" {% if rule.enabled %}checked{% endif %}>
+                </label>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Trigger</span>
+                    <h2>Workflow Settings</h2>
+                </div>
+            </div>
+
+            <div class="form-grid" id="workflowSettings">
+                <label class="field full-field">
+                    <span>Workflow name</span>
+                    <input id="workflowName" type="text" placeholder="New workflow">
+                </label>
+                <label class="field">
+                    <span>Trigger event</span>
+                    <input id="workflowTrigger" type="text" list="workflowTriggerOptions" placeholder="Incoming WhatsApp message">
+                    <datalist id="workflowTriggerOptions"><option>Incoming WhatsApp message</option><option>Conversation status changed</option><option>Customer segment changed</option><option>Pricing intent</option></datalist>
+                </label>
+                <label class="field">
+                    <span>Run mode</span>
+                    <select id="workflowRunMode">
+                        <option>Automatic</option>
+                        <option>Require approval</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Default owner</span>
+                    <input id="workflowOwner" type="text" list="workflowOwnerOptions" placeholder="Sales Team A">
+                    <datalist id="workflowOwnerOptions"><option>Sales Team A</option><option>Support Desk</option><option>Admissions</option><option>Front Office</option></datalist>
+                </label>
+                <label class="field">
+                    <span>Failure action</span>
+                    <select id="workflowFailureAction">
+                        <option>Create support ticket</option>
+                        <option>Retry once</option>
+                        <option>Escalate to admin</option>
+                    </select>
+                </label>
+                <div class="form-actions full-field"><button class="secondary-action" id="saveWorkflow" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button></div>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Runs</span>
+                <h2>Workflow Performance</h2>
+            </div>
+            <button class="icon-button" id="exportWorkflows" type="button" title="Export workflows"><i class="fa-solid fa-download"></i></button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Workflow</th>
+                        <th>Trigger</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                        <th>Runs</th>
+                        <th>Success</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for workflow in workflows %}
+                    <tr>
+                        <td><strong>{{ workflow.name }}</strong></td>
+                        <td>{{ workflow.trigger }}</td>
+                        <td>{{ workflow.owner }}</td>
+                        <td><span class="settings-badge {% if workflow.status == 'Live' %}good{% else %}neutral-badge{% endif %}">{{ workflow.status }}</span></td>
+                        <td>{{ workflow.runs }}</td>
+                        <td>{{ workflow.success }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}

@@ -91,19 +91,31 @@
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
     width: 100%;
-    min-height: 42px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-soft);
     color: var(--text);
-    padding: 0 12px;
     outline: 0;
 }
 
+.field input,
+.field select {
+    min-height: 42px;
+    padding: 0 12px;
+}
+
+.field textarea {
+    min-height: 120px;
+    padding: 12px;
+    resize: vertical;
+}
+
 .field input:focus,
-.field select:focus {
+.field select:focus,
+.field textarea:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.12);
 }

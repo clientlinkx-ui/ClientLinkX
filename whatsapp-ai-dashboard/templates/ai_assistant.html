@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}
+AI Assistant
+{% endblock %}
+
+{% block content %}
+<section class="work-page ai-page">
+    <section class="summary-grid">
+        {% for item in summary %}
+        <article class="summary-card {{ item.tone }}">
+            <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
+            <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-grid ai-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Runtime</span>
+                    <h2>Assistant Configuration</h2>
+                </div>
+                <div class="detail-actions"><span class="settings-badge neutral-badge" id="aiRuntimeStatus">Version {{ runtime.deployment_version }}</span><button class="primary-action" id="deployAiRuntime" type="button"><i class="fa-solid fa-rocket"></i> Deploy Version</button></div>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Primary model</span>
+                    <input id="aiPrimaryModel" type="text" value="{{ runtime.primary_model }}">
+                </label>
+                <label class="field">
+                    <span>Fallback model</span>
+                    <input id="aiFallbackModel" type="text" value="{{ runtime.fallback_model }}">
+                </label>
+                <label class="field">
+                    <span>Confidence threshold</span>
+                    <input id="aiConfidence" type="range" min="0" max="100" value="{{ runtime.confidence_threshold }}">
+                </label>
+                <label class="field">
+                    <span>Temperature</span>
+                    <input id="aiTemperature" type="range" min="0" max="100" value="{{ runtime.temperature }}">
+                </label>
+                <label class="field full-field">
+                    <span>System prompt</span>
+                    <textarea id="aiSystemPrompt" rows="7">{{ runtime.system_prompt }}</textarea>
+                </label>
+                <div class="form-actions full-field"><button class="secondary-action" id="saveAiRuntime" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button></div>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Assistants</span>
+                    <h2>Module Runtime</h2>
+                </div>
+            </div>
+
+            <div class="resource-list">
+                {% for assistant in assistants %}
+                <div class="resource-card role-card">
+                    <span class="summary-icon"><i class="fa-solid fa-robot"></i></span>
+                    <span>
+                        <strong>{{ assistant.name }}</strong>
+                        <small>{{ assistant.model }} - {{ assistant.module }} - {{ assistant.confidence }}% confidence</small>
+                    </span>
+                    <span class="settings-badge {% if assistant.status == 'Live' %}good{% else %}warning{% endif %}">{{ assistant.status }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid ai-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Safety</span>
+                    <h2>Guardrails</h2>
+                </div>
+            </div>
+
+            <div class="rules-grid">
+                {% for guardrail in guardrails %}
+                <label class="toggle-row">
+                    <span>
+                        <strong>{{ guardrail.name }}</strong>
+                        <small>{{ guardrail.detail }}</small>
+                    </span>
+                    <input class="ai-guardrail-toggle" data-id="{{ guardrail.id }}" type="checkbox" {% if guardrail.enabled %}checked{% endif %}>
+                </label>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Simulator</span>
+                    <h2>Test Assistant</h2>
+                </div>
+                <span class="settings-badge neutral-badge" id="ollamaStatus">Not connected</span>
+            </div>
+
+            <div class="simulator-config">
+                <label class="field">
+                    <span>Provider</span>
+                    <select id="assistantProvider">
+                        <option value="ollama" selected>Ollama</option>
+                        <option value="openrouter">OpenRouter</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>API key</span>
+                    <input id="assistantApiKey" type="password" autocomplete="off" placeholder="Paste your API key">
+                </label>
+                <label class="field">
+                    <span>Model</span>
+                    <input id="assistantModel" type="text" value="llama3.1" placeholder="llama3.1">
+                </label>
+                <label class="field full-field">
+                    <span>API URL</span>
+                    <input id="assistantApiUrl" type="url" value="https://ollama.com/api/chat" placeholder="https://ollama.com/api/chat">
+                </label>
+                <button class="primary-action full-field" id="saveAssistantKey" type="button">
+                    <i class="fa-solid fa-key"></i> Save Key
+                </button>
+            </div>
+
+            <div class="message-timeline simulator-timeline" id="assistantSimulatorMessages">
+                <div class="message-bubble inbound">
+                    <span>Test user</span>
+                    <p>Can I reschedule my appointment to Saturday?</p>
+                </div>
+                <div class="message-bubble outbound">
+                    <span>AI Assistant</span>
+                    <p>Yes. I can help with that. Please share your current booking ID or registered phone number.</p>
+                </div>
+            </div>
+
+            <div class="reply-box">
+                <input id="assistantSimulatorInput" type="text" placeholder="Ask a test WhatsApp question...">
+                <button class="primary-action" id="runAssistantTest" type="button"><i class="fa-solid fa-paper-plane"></i> Send</button>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Quality</span>
+                <h2>Regression Tests</h2>
+            </div>
+            <button class="icon-button" id="runAiTestSuite" type="button" title="Run test suite"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Prompt</th>
+                        <th>Intent</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in test_cases %}
+                    <tr>
+                        <td><strong>{{ test.prompt }}</strong></td>
+                        <td>{{ test.intent }}</td>
+                        <td><span class="settings-badge {% if test.result == 'Passed' %}good{% else %}warning{% endif %}">{{ test.result }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}
