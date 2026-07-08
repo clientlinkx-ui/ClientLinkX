@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}
+Account Settings
+{% endblock %}
+
+{% block content %}
+<section class="settings-page account-page">
+    <div class="settings-layout">
+        <aside class="settings-nav" aria-label="Account settings sections">
+            <a href="#account" class="active"><i class="fa-regular fa-user"></i> Account</a>
+            <a href="#personalization"><i class="fa-solid fa-palette"></i> Personalization</a>
+            <a href="#notifications"><i class="fa-regular fa-bell"></i> Notifications</a>
+            <a href="#sessions"><i class="fa-solid fa-laptop"></i> Sessions</a>
+        </aside>
+
+        <div class="settings-content">
+            <section class="settings-section" id="account">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Account</span>
+                        <h2>Account Profile</h2>
+                    </div>
+                    <span class="settings-badge good">Active</span>
+                </div>
+
+                <div class="account-profile-card">
+                    <span class="account-avatar">{{ account.initials }}</span>
+                    <div>
+                        <h3>{{ account.name }}</h3>
+                        <p>{{ account.email }}</p>
+                        <small>{{ account.role }}{% if account.domain %} · {{ account.domain }}{% endif %}</small>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Display name</span>
+                        <input type="text" value="{{ account.name }}" readonly>
+                    </label>
+                    <label class="field">
+                        <span>Email address</span>
+                        <input type="email" value="{{ account.email }}" readonly>
+                    </label>
+                    <label class="field">
+                        <span>Workspace role</span>
+                        <input type="text" value="{{ account.role }}" readonly>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section" id="personalization">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Console</span>
+                        <h2>Personalization</h2>
+                    </div>
+                    <span class="settings-badge neutral-badge" id="personalizationStatus">Saved preferences</span>
+                </div>
+
+                <form class="form-grid" id="personalizationForm">
+                    <label class="field">
+                        <span>Theme</span>
+                        <select name="console_theme">
+                            <option value="auto" {% if preferences.console_theme == 'auto' %}selected{% endif %}>Auto / system</option>
+                            <option value="light" {% if preferences.console_theme == 'light' %}selected{% endif %}>Light</option>
+                            <option value="dark" {% if preferences.console_theme == 'dark' %}selected{% endif %}>Dark</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Interface density</span>
+                        <select name="console_density">
+                            <option value="comfortable" {% if preferences.console_density == 'comfortable' %}selected{% endif %}>Comfortable</option>
+                            <option value="compact" {% if preferences.console_density == 'compact' %}selected{% endif %}>Compact</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Accent color</span>
+                        <select name="accent_color">
+                            <option value="teal" {% if preferences.accent_color == 'teal' %}selected{% endif %}>Teal</option>
+                            <option value="blue" {% if preferences.accent_color == 'blue' %}selected{% endif %}>Blue</option>
+                            <option value="green" {% if preferences.accent_color == 'green' %}selected{% endif %}>Green</option>
+                            <option value="violet" {% if preferences.accent_color == 'violet' %}selected{% endif %}>Violet</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Default sidebar</span>
+                        <select name="default_sidebar">
+                            <option value="expanded" {% if preferences.default_sidebar == 'expanded' %}selected{% endif %}>Expanded</option>
+                            <option value="collapsed" {% if preferences.default_sidebar == 'collapsed' %}selected{% endif %}>Collapsed</option>
+                        </select>
+                    </label>
+
+                    <div class="personalization-preview full-field">
+                        <div>
+                            <span class="eyebrow">Preview</span>
+                            <strong>PingPilot Console</strong>
+                            <small>Theme, spacing, accent color, and sidebar preference apply to this account only.</small>
+                        </div>
+                        <button class="primary-action" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Preferences</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="settings-section" id="notifications">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Personal</span>
+                        <h2>Notification Preferences</h2>
+                    </div>
+                </div>
+
+                <div class="rules-grid">
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Account activity alerts</strong>
+                            <small>Notify me when my account signs in from a new device.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                    <label class="toggle-row">
+                        <span>
+                            <strong>Product update digest</strong>
+                            <small>Send a weekly summary of console improvements.</small>
+                        </span>
+                        <input type="checkbox" checked>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section" id="sessions">
+                <div class="settings-section-header">
+                    <div>
+                        <span class="eyebrow">Access</span>
+                        <h2>Session</h2>
+                    </div>
+                    <a class="primary-action" href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</a>
+                </div>
+
+                <div class="connection-list">
+                    <div class="connection-item">
+                        <div>
+                            <strong>Current browser session</strong>
+                            <span>This browser session is active.</span>
+                        </div>
+                        <span class="settings-badge good">Active</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -33,16 +33,23 @@
 
     <div class="navbar-center">
 
-        <form class="search-box">
+        <div class="global-search" id="globalSearch">
+        <form class="search-box" id="globalSearchForm" role="search">
 
             <i class="fa-solid fa-magnifying-glass"></i>
 
             <input
+                id="globalSearchInput"
                 type="text"
                 placeholder="Search conversations, customers, documents..."
-                autocomplete="off">
+                autocomplete="off"
+                aria-label="Search dashboard"
+                aria-controls="globalSearchResults"
+                aria-expanded="false">
 
         </form>
+        <div class="search-results" id="globalSearchResults" role="listbox" aria-label="Search results" hidden></div>
+        </div>
 
     </div>
 
@@ -61,27 +68,29 @@
 
         </button>
 
-        <button class="nav-btn"
-                title="Notifications">
+        <div class="nav-action" data-inbox="notifications">
+            <button class="nav-btn inbox-trigger" id="notificationsButton" type="button" title="Notifications" aria-label="Notifications" aria-controls="notificationsPanel" aria-expanded="false">
+                <i class="fa-regular fa-bell"></i>
+                <span class="notification-badge" data-badge hidden>0</span>
+            </button>
+            <section class="inbox-panel" id="notificationsPanel" aria-label="Notifications" hidden>
+                <header><strong>Notifications</strong><button class="inbox-read-all" type="button">Mark all read</button></header>
+                <div class="inbox-list" data-list><div class="inbox-state">Loading notifications...</div></div>
+                <a class="inbox-footer" href="{{ url_for('support') }}">Open Help Desk <i class="fa-solid fa-arrow-right"></i></a>
+            </section>
+        </div>
 
-            <i class="fa-regular fa-bell"></i>
-
-            <span class="notification-badge">
-                3
-            </span>
-
-        </button>
-
-        <button class="nav-btn"
-                title="Messages">
-
-            <i class="fa-regular fa-envelope"></i>
-
-            <span class="notification-badge">
-                8
-            </span>
-
-        </button>
+        <div class="nav-action" data-inbox="messages">
+            <button class="nav-btn inbox-trigger" id="messagesButton" type="button" title="Messages" aria-label="Messages" aria-controls="messagesPanel" aria-expanded="false">
+                <i class="fa-regular fa-envelope"></i>
+                <span class="notification-badge" data-badge hidden>0</span>
+            </button>
+            <section class="inbox-panel" id="messagesPanel" aria-label="Messages" hidden>
+                <header><strong>Messages</strong><button class="inbox-read-all" type="button">Mark all read</button></header>
+                <div class="inbox-list" data-list><div class="inbox-state">Loading messages...</div></div>
+                <a class="inbox-footer" href="{{ url_for('conversations') }}">View all conversations <i class="fa-solid fa-arrow-right"></i></a>
+            </section>
+        </div>
 
         <!-- Divider -->
 
@@ -89,25 +98,23 @@
 
         <!-- User Dropdown -->
 
-        <div class="profile-dropdown">
+        <div class="profile-dropdown" id="accountMenu">
 
-            <button class="profile-btn">
+            <button class="profile-btn" id="accountMenuButton" type="button" aria-haspopup="menu" aria-expanded="false">
 
-                <img
-                    src="{{ url_for('static', filename='images/avatar.png') }}"
-                    alt="Profile">
+                <span class="profile-avatar">{{ account.initials }}</span>
 
                 <div class="profile-details">
 
                     <span class="profile-name">
 
-                        Admin User
+                        {{ account.name }}
 
                     </span>
 
                     <span class="profile-role">
 
-                        Super Admin
+                        {{ account.email }}
 
                     </span>
 
@@ -119,35 +126,36 @@
 
             <!-- Dropdown -->
 
-            <div class="dropdown-menu">
+            <div class="dropdown-menu" id="accountDropdown" role="menu" hidden>
 
-                <a href="#">
+                <div class="dropdown-account">
+                    <span class="profile-avatar">{{ account.initials }}</span>
+                    <div>
+                        <strong>{{ account.name }}</strong>
+                        <small>{{ account.email }}</small>
+                        <small>{{ account.role }}</small>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('account_settings') }}" role="menuitem">
 
                     <i class="fa-regular fa-user"></i>
 
-                    My Profile
+                    Manage Account
 
                 </a>
 
-                <a href="#">
+                <a href="{{ url_for('support') }}#help-center" role="menuitem">
 
-                    <i class="fa-solid fa-building"></i>
+                    <i class="fa-regular fa-circle-question"></i>
 
-                    Workspace
-
-                </a>
-
-                <a href="#">
-
-                    <i class="fa-solid fa-gear"></i>
-
-                    Settings
+                    Help Desk
 
                 </a>
 
                 <hr>
 
-                <a href="#">
+                <a href="{{ url_for('logout') }}" role="menuitem">
 
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
 

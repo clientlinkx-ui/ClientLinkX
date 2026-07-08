@@ -32,7 +32,7 @@ Conversations
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input id="conversationSearch" type="search" placeholder="Search name, phone, intent...">
             </label>
-            <button class="primary-action" type="button"><i class="fa-solid fa-plus"></i> New Thread</button>
+            <button class="primary-action" type="button" id="newConversationThread"><i class="fa-solid fa-plus"></i> New Thread</button>
         </div>
     </section>
 
@@ -49,6 +49,7 @@ Conversations
             <div class="thread-list" id="threadList">
                 {% for thread in threads %}
                 <button class="thread-row {% if loop.first %}active{% endif %}" type="button"
+                        data-thread-id="{{ thread.id }}"
                         data-status="{{ thread.status }}"
                         data-search="{{ thread.customer_name }} {{ thread.phone }} {{ thread.intent }} {{ thread.module }}">
                     <span class="avatar-placeholder">{{ thread.customer_name[0] }}</span>
@@ -76,31 +77,32 @@ Conversations
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">Selected Thread</span>
-                    <h2>Priya Nair</h2>
+                    <h2 id="threadDetailName">Priya Nair</h2>
                 </div>
                 <div class="detail-actions">
-                    <button class="icon-button" type="button" title="Assign thread"><i class="fa-solid fa-user-plus"></i></button>
-                    <button class="icon-button" type="button" title="More actions"><i class="fa-solid fa-ellipsis"></i></button>
+                    <button class="icon-button" id="assignThread" type="button" title="Assign thread"><i class="fa-solid fa-user-plus"></i></button>
+                    <button class="icon-button" id="resolveThread" type="button" title="Resolve thread"><i class="fa-solid fa-circle-check"></i></button>
+                    <button class="icon-button" id="escalateThread" type="button" title="Escalate thread"><i class="fa-solid fa-arrow-up-right-dots"></i></button>
                 </div>
             </div>
 
             <div class="customer-strip">
-                <span class="avatar-placeholder">P</span>
+                <span class="avatar-placeholder" id="threadDetailAvatar">P</span>
                 <div>
-                    <strong>+91 98201 11842</strong>
-                    <span>Orders · Positive sentiment · SLA 4m</span>
+                    <strong id="threadDetailPhone">+91 98201 11842</strong>
+                    <span id="threadDetailMeta">Orders - Positive sentiment - SLA 4m</span>
                 </div>
-                <span class="status-pill online">AI handling</span>
+                <span class="status-pill online" id="threadDetailHandler">AI handling</span>
             </div>
 
-            <div class="message-timeline">
+            <div class="message-timeline" id="threadMessageTimeline">
                 <div class="message-bubble inbound">
                     <span>Customer</span>
                     <p>Can you confirm when my replacement order will arrive?</p>
                 </div>
                 <div class="message-bubble outbound">
                     <span>AI Assistant</span>
-                    <p>Your replacement order CLX-2918 is expected tomorrow between 2 PM and 6 PM.</p>
+                    <p>Your replacement order PP-2918 is expected tomorrow between 2 PM and 6 PM.</p>
                 </div>
                 <div class="message-bubble inbound">
                     <span>Customer</span>
@@ -109,8 +111,8 @@ Conversations
             </div>
 
             <div class="reply-box">
-                <input type="text" value="Tracking link is ready. Send now?">
-                <button class="primary-action" type="button"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                <input id="threadReplyInput" type="text" value="Tracking link is ready. Send now?">
+                <button class="primary-action" id="sendThreadReply" type="button"><i class="fa-solid fa-paper-plane"></i> Send</button>
             </div>
         </article>
 

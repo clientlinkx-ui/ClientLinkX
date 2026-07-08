@@ -54,7 +54,7 @@
 
 </head>
 
-<body>
+<body class="{{ body_classes }}">
 
 <div class="app-layout">
 
@@ -83,6 +83,7 @@
 <script defer src="{{ url_for('static', filename='js/settings.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/conversations.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/ai_assistant.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/operations.js') }}"></script>
 
 </body>
 

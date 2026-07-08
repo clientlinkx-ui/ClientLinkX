@@ -64,7 +64,7 @@ WhatsApp AI Customer Dashboard
                     <i class="fa-solid fa-brain"></i>
                 </div>
                 <div>
-                    <h3>GPT-4.1 Mini</h3>
+                    <h3>{{ ai_runtime.primary_model }}</h3>
                     <p>Primary model for customer support and lead qualification.</p>
                 </div>
             </div>
@@ -80,7 +80,7 @@ WhatsApp AI Customer Dashboard
                 </div>
                 <div>
                     <span>Prompt version</span>
-                    <strong>v3.4</strong>
+                    <strong>v{{ ai_runtime.deployment_version }}</strong>
                 </div>
             </div>
 

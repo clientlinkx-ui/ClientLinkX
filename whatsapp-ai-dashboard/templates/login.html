@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in | PingPilot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body class="login-body">
+    <main class="login-shell">
+        <section class="login-brand">
+            <span>PingPilot</span>
+            <h1>WhatsApp AI operations, protected by Google sign-in.</h1>
+            <p>Access conversations, analytics, AI management, billing, and support from one customer dashboard.</p>
+        </section>
+
+        <section class="login-panel">
+            <div class="login-mark">PP</div>
+            <h2>Sign in to your workspace</h2>
+            <p>Use your approved Google account to continue.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="login-alerts">
+                {% for category, message in messages %}
+                <div class="login-alert">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% if auth_ready %}
+            <a class="google-login-button" href="{{ url_for('google_login', next=next_url) }}">
+                <span class="google-g">G</span>
+                Continue with Google
+            </a>
+            {% if allowed_domain %}
+            <small class="login-note">Only accounts from {{ allowed_domain }} can sign in.</small>
+            {% endif %}
+            {% else %}
+            <div class="login-setup">
+                <strong>Google authentication is not configured yet.</strong>
+                <span>Set the missing environment value{% if missing_config|length != 1 %}s{% endif %} and restart Flask:</span>
+                {% for item in missing_config %}
+                <code>{{ item }}</code>
+                {% endfor %}
+                <span>Add this authorized redirect URI in Google Cloud:</span>
+                <code>{{ url_for('google_callback', _external=True) }}</code>
+            </div>
+            {% endif %}
+
+            <div class="login-switch">
+                New to PingPilot?
+                <a href="{{ url_for('register', next=next_url) }}">Create an account</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

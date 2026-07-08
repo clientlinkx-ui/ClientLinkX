@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | PingPilot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body class="login-body">
+    <main class="login-shell">
+        <section class="login-brand">
+            <span>PingPilot</span>
+            <h1>Create your WhatsApp AI operations workspace.</h1>
+            <p>Register with Google, Apple, or WhatsApp to start managing chatbot conversations, analytics, knowledge, workflows, billing, and support.</p>
+        </section>
+
+        <section class="login-panel">
+            <div class="login-mark">PP</div>
+            <h2>Register your account</h2>
+            <p>Choose the account provider you want to use for secure workspace access.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="login-alerts">
+                {% for category, message in messages %}
+                <div class="login-alert">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="auth-provider-list">
+                {% if auth_ready %}
+                <a class="auth-provider-button" href="{{ url_for('google_login', next=next_url) }}">
+                    <span class="provider-icon google-g">G</span>
+                    Register with Google
+                </a>
+                {% else %}
+                <div class="login-setup">
+                    <strong>Google registration is not configured yet.</strong>
+                    <span>Set the missing environment value{% if missing_config|length != 1 %}s{% endif %} and restart Flask:</span>
+                    {% for item in missing_config %}
+                    <code>{{ item }}</code>
+                    {% endfor %}
+                    <span>Add this authorized redirect URI in Google Cloud:</span>
+                    <code>{{ url_for('google_callback', _external=True) }}</code>
+                </div>
+                {% endif %}
+
+                <a class="auth-provider-button {% if not apple_ready %}is-muted{% endif %}" href="{{ url_for('apple_login', next=next_url) }}">
+                    <span class="provider-icon apple-icon"><i class="fa-brands fa-apple"></i></span>
+                    Register with Apple
+                </a>
+
+                <a class="auth-provider-button {% if not whatsapp_ready %}is-muted{% endif %}" href="{{ url_for('whatsapp_login', next=next_url) }}">
+                    <span class="provider-icon whatsapp-icon"><i class="fa-brands fa-whatsapp"></i></span>
+                    Register with WhatsApp
+                </a>
+            </div>
+
+            {% if allowed_domain %}
+            <small class="login-note">Only accounts from {{ allowed_domain }} can access this workspace.</small>
+            {% endif %}
+
+            <div class="login-switch">
+                Already have an account?
+                <a href="{{ url_for('login', next=next_url) }}">Sign in</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

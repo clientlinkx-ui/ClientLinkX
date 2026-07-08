@@ -117,7 +117,7 @@
 .field select:focus,
 .field textarea:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.12);
+    box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .field input[type="range"] {
@@ -146,6 +146,13 @@
     padding: 14px;
 }
 
+.connection-item > div,
+.model-setting-row > div,
+.module-setting-card > span,
+.toggle-row > span {
+    min-width: 0;
+}
+
 .connection-item span,
 .model-setting-row span,
 .module-setting-card small,
@@ -154,6 +161,14 @@
     margin-top: 4px;
     color: var(--muted);
     font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}
+
+.connection-item strong,
+.model-setting-row strong,
+.module-setting-card strong,
+.toggle-row strong {
+    overflow-wrap: anywhere;
 }
 
 .settings-badge {
@@ -164,6 +179,9 @@
     padding: 0 9px;
     font-size: 0.74rem;
     font-weight: 850;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
@@ -175,6 +193,11 @@
 .settings-badge.warning {
     background: var(--warning-soft);
     color: var(--warning);
+}
+
+.settings-badge.neutral-badge {
+    background: var(--surface-soft);
+    color: var(--text-soft);
 }
 
 .toggle-row {
@@ -191,6 +214,59 @@
 
 .module-setting-card {
     cursor: pointer;
+}
+
+.account-profile-card,
+.personalization-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.account-profile-card {
+    justify-content: flex-start;
+}
+
+.account-avatar {
+    display: inline-grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font-weight: 900;
+}
+
+.account-profile-card h3,
+.account-profile-card p,
+.account-profile-card small,
+.personalization-preview strong,
+.personalization-preview small {
+    display: block;
+    margin: 0;
+}
+
+.account-profile-card p {
+    margin-top: 4px;
+    color: var(--text-soft);
+}
+
+.account-profile-card small,
+.personalization-preview small {
+    margin-top: 4px;
+    color: var(--muted);
+}
+
+.personalization-preview {
+    margin: 0;
 }
 
 @media (max-width: 980px) {
@@ -211,6 +287,8 @@
     .connection-item,
     .model-setting-row,
     .module-setting-card,
+    .account-profile-card,
+    .personalization-preview,
     .toggle-row {
         align-items: flex-start;
         flex-direction: column;

@@ -15,6 +15,117 @@ body {
     color: var(--text);
 }
 
+body.theme-dark {
+    --bg: #101814;
+    --surface: #16231d;
+    --surface-soft: #1d2b24;
+    --surface-tint: #19352c;
+    --text: #eef8f2;
+    --text-soft: #d5e4dc;
+    --muted: #9db1a7;
+    --primary: #14b8a6;
+    --primary-dark: #5eead4;
+    --primary-soft: rgba(45, 212, 191, 0.16);
+    --on-primary: #042f2e;
+    --warning: #fbbf24;
+    --warning-soft: rgba(251, 191, 36, 0.16);
+    --danger: #f87171;
+    --danger-soft: rgba(248, 113, 113, 0.16);
+    --success: #4ade80;
+    --success-soft: rgba(74, 222, 128, 0.16);
+    --border: #2d4238;
+    --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+body.accent-blue {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-soft: #dbeafe;
+}
+
+body.accent-green {
+    --primary: #16a34a;
+    --primary-dark: #15803d;
+    --primary-soft: #dcfce7;
+}
+
+body.accent-violet {
+    --primary: #7c3aed;
+    --primary-dark: #6d28d9;
+    --primary-soft: #ede9fe;
+}
+
+body.theme-dark.accent-blue {
+    --primary: #60a5fa;
+    --primary-dark: #bfdbfe;
+    --primary-soft: rgba(96, 165, 250, 0.16);
+}
+
+body.theme-dark.accent-green {
+    --primary: #4ade80;
+    --primary-dark: #bbf7d0;
+    --primary-soft: rgba(74, 222, 128, 0.16);
+}
+
+body.theme-dark.accent-violet {
+    --primary: #a78bfa;
+    --primary-dark: #ddd6fe;
+    --primary-soft: rgba(167, 139, 250, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+    body.theme-auto {
+        --bg: #101814;
+        --surface: #16231d;
+        --surface-soft: #1d2b24;
+        --surface-tint: #19352c;
+        --text: #eef8f2;
+        --text-soft: #d5e4dc;
+        --muted: #9db1a7;
+        --primary: #14b8a6;
+        --primary-dark: #5eead4;
+        --primary-soft: rgba(45, 212, 191, 0.16);
+        --on-primary: #042f2e;
+        --warning: #fbbf24;
+        --warning-soft: rgba(251, 191, 36, 0.16);
+        --danger: #f87171;
+        --danger-soft: rgba(248, 113, 113, 0.16);
+        --success: #4ade80;
+        --success-soft: rgba(74, 222, 128, 0.16);
+        --border: #2d4238;
+        --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    body.theme-auto.accent-blue {
+        --primary: #60a5fa;
+        --primary-dark: #bfdbfe;
+        --primary-soft: rgba(96, 165, 250, 0.16);
+    }
+
+    body.theme-auto.accent-green {
+        --primary: #4ade80;
+        --primary-dark: #bbf7d0;
+        --primary-soft: rgba(74, 222, 128, 0.16);
+    }
+
+    body.theme-auto.accent-violet {
+        --primary: #a78bfa;
+        --primary-dark: #ddd6fe;
+        --primary-soft: rgba(167, 139, 250, 0.18);
+    }
+}
+
+body.density-compact main {
+    padding: 16px;
+}
+
+body.density-compact .panel,
+body.density-compact .settings-section,
+body.density-compact .stat-card,
+body.density-compact .summary-card {
+    padding: 14px;
+}
+
 button {
     font: inherit;
 }
@@ -33,6 +144,30 @@ a {
     color: inherit;
 }
 
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+strong,
+small,
+td,
+th,
+button,
+input,
+select,
+textarea {
+    min-width: 0;
+}
+
+p,
+small,
+td,
+th {
+    overflow-wrap: anywhere;
+}
+
 img {
     display: block;
     max-width: 100%;
@@ -40,4 +175,72 @@ img {
 
 main {
     padding: 24px;
+}
+
+.toast-host {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 100;
+    display: grid;
+    gap: 10px;
+    width: min(360px, calc(100vw - 32px));
+}
+
+.toast {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    font-weight: 750;
+}
+
+.toast.good {
+    border-color: var(--success);
+}
+
+.toast.warning {
+    border-color: var(--warning);
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    background: rgba(15, 23, 42, 0.46);
+    padding: 20px;
+}
+
+.modal-panel {
+    width: min(680px, 100%);
+    max-height: min(760px, calc(100vh - 40px));
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+    padding: 18px;
+}
+
+.modal-panel header,
+.modal-panel footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.modal-panel h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.modal-panel .form-grid {
+    margin: 16px 0;
 }

@@ -57,10 +57,13 @@
     min-height: 40px;
     border: 0;
     border-radius: var(--radius);
-    background: var(--primary-dark);
-    color: white;
+    background: var(--primary);
+    color: var(--on-primary);
     padding: 0 14px;
     font-weight: 850;
+    max-width: 100%;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .stats-grid,

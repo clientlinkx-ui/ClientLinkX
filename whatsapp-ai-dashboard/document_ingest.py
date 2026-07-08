@@ -183,7 +183,7 @@ def parse_legacy_office(filename, data):
     if not binary:
         raise ValueError(f"{Path(filename).suffix.upper()} conversion requires LibreOffice.")
 
-    with tempfile.TemporaryDirectory(prefix="clientlinkx-doc-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="pingpilot-doc-") as temp_dir:
         input_path = Path(temp_dir) / Path(filename).name
         input_path.write_bytes(data)
         result = subprocess.run(

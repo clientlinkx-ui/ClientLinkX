@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "clientlinkx_dashboard.db"
+DB_PATH = BASE_DIR / "pingpilot_dashboard.db"
 
 
 def get_connection():
@@ -42,6 +42,21 @@ def create_schema(connection):
             industry TEXT NOT NULL,
             timezone TEXT NOT NULL,
             language TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS dashboard_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            google_sub TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            picture TEXT,
+            hosted_domain TEXT,
+            console_theme TEXT NOT NULL DEFAULT 'auto',
+            console_density TEXT NOT NULL DEFAULT 'comfortable',
+            accent_color TEXT NOT NULL DEFAULT 'teal',
+            default_sidebar TEXT NOT NULL DEFAULT 'expanded',
+            last_login_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS pages (
@@ -617,11 +632,59 @@ def create_schema(connection):
             sort_order INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS topbar_notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            body TEXT NOT NULL,
+            icon TEXT NOT NULL,
+            url TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            time TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS topbar_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id INTEGER NOT NULL,
+            sender TEXT NOT NULL,
+            preview TEXT NOT NULL,
+            initials TEXT NOT NULL,
+            url TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            time TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+        );
         """
     )
 
 
 def run_migrations(connection):
+    user_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(dashboard_users)").fetchall()
+    }
+    for name, definition in {
+        "console_theme": "TEXT NOT NULL DEFAULT 'auto'",
+        "console_density": "TEXT NOT NULL DEFAULT 'comfortable'",
+        "accent_color": "TEXT NOT NULL DEFAULT 'teal'",
+        "default_sidebar": "TEXT NOT NULL DEFAULT 'expanded'",
+    }.items():
+        if user_columns and name not in user_columns:
+            connection.execute(f"ALTER TABLE dashboard_users ADD COLUMN {name} {definition}")
+    if user_columns and "console_theme" in user_columns:
+        connection.execute(
+            """UPDATE dashboard_users
+            SET console_theme = 'auto'
+            WHERE console_theme = 'light'
+              AND console_density = 'comfortable'
+              AND accent_color = 'teal'
+              AND default_sidebar = 'expanded'"""
+        )
+
     columns = {
         row["name"]
         for row in connection.execute("PRAGMA table_info(kb_entries)").fetchall()
@@ -669,8 +732,82 @@ def run_migrations(connection):
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS conversation_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thread_id INTEGER NOT NULL,
+            tenant_id INTEGER NOT NULL,
+            sender TEXT NOT NULL,
+            role TEXT NOT NULL,
+            body TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (thread_id) REFERENCES conversation_threads(id) ON DELETE CASCADE,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS workspace_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id INTEGER NOT NULL UNIQUE,
+            webhook_url TEXT NOT NULL DEFAULT 'https://api.pingpilot.ai/webhooks/whatsapp',
+            message_window_policy TEXT NOT NULL DEFAULT '24 hour service window',
+            default_handoff_team TEXT NOT NULL DEFAULT 'Support Desk',
+            sla_target TEXT NOT NULL DEFAULT 'Under 10 minutes',
+            daily_digest INTEGER NOT NULL DEFAULT 1,
+            escalation_alerts INTEGER NOT NULL DEFAULT 1,
+            kb_failure_alerts INTEGER NOT NULL DEFAULT 1,
+            kb_grounding INTEGER NOT NULL DEFAULT 1,
+            intent_detection INTEGER NOT NULL DEFAULT 1,
+            handoff_low_confidence INTEGER NOT NULL DEFAULT 1,
+            handoff_negative_sentiment INTEGER NOT NULL DEFAULT 1,
+            require_2fa INTEGER NOT NULL DEFAULT 1,
+            mask_phone_numbers INTEGER NOT NULL DEFAULT 1,
+            retention_period TEXT NOT NULL DEFAULT '180 days',
+            audit_export TEXT NOT NULL DEFAULT 'Monthly CSV',
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS assistant_connections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            provider TEXT NOT NULL,
+            provider_label TEXT NOT NULL,
+            api_key TEXT NOT NULL,
+            api_url TEXT NOT NULL,
+            model TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES dashboard_users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS addon_cart (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id INTEGER NOT NULL,
+            addon_module_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(tenant_id, addon_module_id),
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+            FOREIGN KEY (addon_module_id) REFERENCES addon_modules(id) ON DELETE CASCADE
+        );
         """
     )
+    support_columns = {row["name"] for row in connection.execute("PRAGMA table_info(support_tickets)").fetchall()}
+    for name, definition in {
+        "request_type": "TEXT NOT NULL DEFAULT 'Technical support'",
+        "description": "TEXT NOT NULL DEFAULT ''",
+        "attachment": "TEXT NOT NULL DEFAULT ''",
+        "created_at": "TEXT NOT NULL DEFAULT ''",
+    }.items():
+        if support_columns and name not in support_columns:
+            connection.execute(f"ALTER TABLE support_tickets ADD COLUMN {name} {definition}")
+    team_role_columns = {row["name"] for row in connection.execute("PRAGMA table_info(team_roles)").fetchall()}
+    if team_role_columns and "permissions" not in team_role_columns:
+        connection.execute("ALTER TABLE team_roles ADD COLUMN permissions TEXT NOT NULL DEFAULT ''")
+    connection.execute("INSERT OR IGNORE INTO workspace_settings (tenant_id) VALUES (1)")
+    workspace_columns = {row["name"] for row in connection.execute("PRAGMA table_info(workspace_settings)").fetchall()}
+    for name in ["kb_grounding", "intent_detection", "handoff_low_confidence", "handoff_negative_sentiment"]:
+        if workspace_columns and name not in workspace_columns:
+            connection.execute(f"ALTER TABLE workspace_settings ADD COLUMN {name} INTEGER NOT NULL DEFAULT 1")
     connection.execute(
         """INSERT OR IGNORE INTO ai_runtime_settings
         (tenant_id, primary_model, fallback_model, confidence_threshold, temperature, system_prompt)
@@ -689,6 +826,31 @@ def run_migrations(connection):
         ELSE 'Resolve the customer request using approved knowledge base context. Keep responses concise and escalate sensitive, uncertain, or frustrated cases to a human agent.' END
         WHERE instructions = ''"""
     )
+    if connection.execute("SELECT COUNT(*) FROM topbar_notifications").fetchone()[0] == 0:
+        connection.executemany(
+            """INSERT INTO topbar_notifications
+            (tenant_id, title, body, icon, url, is_read, time, sort_order)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?)""",
+            [
+                ("SLA needs attention", "Two escalations are approaching their response deadline.", "fa-solid fa-clock", "/conversations", 0, "5m", 1),
+                ("Knowledge sync completed", "148 documents are available to the AI assistant.", "fa-solid fa-arrows-rotate", "/knowledge-base", 0, "22m", 2),
+                ("Prompt deployed", "Support resolution prompt v3.4 is now live.", "fa-solid fa-rocket", "/prompt-builder", 0, "1h", 3),
+                ("Invoice paid", "Invoice INV-2026-071 was paid successfully.", "fa-solid fa-receipt", "/billing", 1, "1d", 4),
+            ],
+        )
+    if connection.execute("SELECT COUNT(*) FROM topbar_messages").fetchone()[0] == 0:
+        connection.executemany(
+            """INSERT INTO topbar_messages
+            (tenant_id, sender, preview, initials, url, is_read, time, sort_order)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?)""",
+            [
+                ("Priya Nair", "Can you confirm when my order will arrive?", "PN", "/conversations", 0, "2m", 1),
+                ("Arjun Mehta", "I need details about the MBA admission fees.", "AM", "/conversations", 0, "8m", 2),
+                ("Fatima Khan", "My refund has not reached my account yet.", "FK", "/conversations", 0, "14m", 3),
+                ("Vikram Shah", "Please move my appointment to Saturday.", "VS", "/conversations", 0, "31m", 4),
+                ("Meera Iyer", "Could someone help connect our WhatsApp number?", "MI", "/conversations", 1, "1h", 5),
+            ],
+        )
     connection.commit()
 
 
@@ -900,7 +1062,7 @@ def seed_database(connection):
         {"page_id": pages["dashboard"], "title": "Automation Rate", "value": "87.6%", "change": "+5.6%", "trend": "up", "icon": "fa-solid fa-bolt"},
     ])
     insert_rows(connection, "dashboard_conversations", [
-        {"tenant_id": tenant_id, "customer_name": "Priya Nair", "avatar": None, "time": "2m ago", "last_message": "Asked for delivery ETA on order #CLX-2918.", "handler": "AI", "status": "Active", "unread": 2},
+        {"tenant_id": tenant_id, "customer_name": "Priya Nair", "avatar": None, "time": "2m ago", "last_message": "Asked for delivery ETA on order #PP-2918.", "handler": "AI", "status": "Active", "unread": 2},
         {"tenant_id": tenant_id, "customer_name": "Arjun Mehta", "avatar": None, "time": "8m ago", "last_message": "Requested course fee details and scholarship options.", "handler": "AI", "status": "Waiting", "unread": 1},
         {"tenant_id": tenant_id, "customer_name": "Maya Kapoor", "avatar": None, "time": "18m ago", "last_message": "Booking moved to Saturday at 4:30 PM.", "handler": "Human", "status": "Resolved", "unread": 0},
         {"tenant_id": tenant_id, "customer_name": "Rahul Shah", "avatar": None, "time": "31m ago", "last_message": "Lead qualified for enterprise pricing follow-up.", "handler": "AI", "status": "Active", "unread": 4},
@@ -988,10 +1150,10 @@ def seed_shared_domain_rows(connection, tenant_id):
         {"tenant_id": tenant_id, "name": "Audit coverage", "value": "98%", "progress": 98},
     ])
     insert_rows(connection, "support_tickets", [
-        {"tenant_id": tenant_id, "ticket_id": "CLX-1042", "subject": "WhatsApp template rejected", "priority": "High", "owner": "Support Desk", "status": "Open", "updated": "11m ago"},
-        {"tenant_id": tenant_id, "ticket_id": "CLX-1038", "subject": "Admissions workflow edit request", "priority": "Normal", "owner": "Onboarding", "status": "In Progress", "updated": "38m ago"},
-        {"tenant_id": tenant_id, "ticket_id": "CLX-1031", "subject": "Need billing invoice for June", "priority": "Low", "owner": "Finance", "status": "Waiting", "updated": "2h ago"},
-        {"tenant_id": tenant_id, "ticket_id": "CLX-1024", "subject": "Add new support team member", "priority": "Normal", "owner": "Support Desk", "status": "Resolved", "updated": "1d ago"},
+        {"tenant_id": tenant_id, "ticket_id": "PP-1042", "subject": "WhatsApp template rejected", "priority": "High", "owner": "Support Desk", "status": "Open", "updated": "11m ago"},
+        {"tenant_id": tenant_id, "ticket_id": "PP-1038", "subject": "Admissions workflow edit request", "priority": "Normal", "owner": "Onboarding", "status": "In Progress", "updated": "38m ago"},
+        {"tenant_id": tenant_id, "ticket_id": "PP-1031", "subject": "Need billing invoice for June", "priority": "Low", "owner": "Finance", "status": "Waiting", "updated": "2h ago"},
+        {"tenant_id": tenant_id, "ticket_id": "PP-1024", "subject": "Add new support team member", "priority": "Normal", "owner": "Support Desk", "status": "Resolved", "updated": "1d ago"},
     ])
     insert_rows(connection, "status_checks", [
         {"tenant_id": tenant_id, "name": "WhatsApp API", "status": "Operational", "detail": "99.99% uptime"},
@@ -1079,7 +1241,7 @@ def seed_billing_ai_knowledge_prompt_workflow_settings(connection, tenant_id):
         {"tenant_id": tenant_id, "name": "Allow promotional recommendations", "detail": "Permit cross-sell suggestions in qualified sales flows.", "enabled": 0},
     ])
     insert_rows(connection, "ai_test_cases", [
-        {"tenant_id": tenant_id, "prompt": "Where is my order CLX-2918?", "intent": "Order status", "result": "Passed"},
+        {"tenant_id": tenant_id, "prompt": "Where is my order PP-2918?", "intent": "Order status", "result": "Passed"},
         {"tenant_id": tenant_id, "prompt": "What is the MBA admission deadline?", "intent": "Admissions", "result": "Passed"},
         {"tenant_id": tenant_id, "prompt": "I want a refund now.", "intent": "Refund escalation", "result": "Review"},
     ])
@@ -1260,6 +1422,7 @@ def with_page(slug, payload):
 
 def get_dashboard_data():
     return with_page("dashboard", {
+        "ai_runtime": get_ai_runtime(),
         "stats": page_ordered("dashboard_stats", "dashboard", "title, value, change, trend, icon"),
         "conversations": ordered("dashboard_conversations", columns="customer_name, avatar, time, last_message, handler, status, unread"),
         "activities": ordered("dashboard_activities", columns="title, description, activity_type, icon, time, user, status"),
@@ -1272,7 +1435,7 @@ def get_dashboard_data():
 def get_conversations_data():
     return with_page("conversations", {
         "summary": summary("conversations"),
-        "threads": ordered("conversation_threads", columns="customer_name, phone, intent, module, handler, status, priority, sentiment, time, last_message, messages, sla"),
+        "threads": ordered("conversation_threads", columns="id, customer_name, phone, intent, module, handler, status, priority, sentiment, time, last_message, messages, sla"),
         "quick_filters": [item["label"] for item in page_ordered("quick_filters", "conversations", "label")],
     })
 
@@ -1288,28 +1451,35 @@ def get_analytics_data():
 
 def get_settings_data():
     tenant = fetch_one("SELECT name AS company_name, industry, timezone, language FROM tenants WHERE id = 1")
+    runtime = get_ai_runtime()
+    models = ordered("settings_models", columns="name, model, temperature, status")
+    for model in models:
+        model["model"] = runtime["fallback_model"] if "Fallback" in model["name"] else runtime["primary_model"]
     return with_page("settings", {
         "workspace": tenant,
+        "workspace_settings": fetch_one("SELECT * FROM workspace_settings WHERE tenant_id = 1"),
+        "ai_runtime": runtime,
         "channels": ordered("settings_channels", columns="name, status, detail, tone"),
-        "models": ordered("settings_models", columns="name, model, temperature, status"),
-        "modules": ordered("settings_modules", columns="name, enabled, owner"),
+        "models": models,
+        "modules": ordered("settings_modules", columns="id, name, enabled, owner"),
     })
 
 
 def get_security_data():
     return with_page("security", {
         "summary": summary("security"),
-        "access_rules": ordered("security_access_rules", columns="name, detail, enabled"),
-        "roles": ordered("security_roles", columns="role, users, permissions"),
+        "access_rules": ordered("security_access_rules", columns="id, name, detail, enabled"),
+        "roles": ordered("security_roles", columns="id, role, users, permissions"),
         "audit_logs": ordered("audit_logs", columns="event, user, ip, time, status"),
         "compliance": ordered("compliance_items", columns="name, value, progress"),
+        "security_settings": fetch_one("SELECT * FROM workspace_settings WHERE tenant_id = 1"),
     })
 
 
 def get_support_data():
     return with_page("support", {
         "summary": summary("support"),
-        "tickets": ordered("support_tickets", columns="ticket_id AS id, subject, priority, owner, status, updated"),
+        "tickets": ordered("support_tickets", columns="id, ticket_id, subject, priority, owner, status, updated, request_type, description, attachment, created_at"),
         "status_checks": ordered("status_checks", columns="name, status, detail"),
         "resources": ordered("support_resources", columns="title, detail, icon"),
     })
@@ -1319,7 +1489,7 @@ def get_customers_data():
     return with_page("customers", {
         "summary": summary("customers"),
         "segments": ordered("customer_segments", columns="name, value, progress"),
-        "customers": ordered("customers", columns="name, phone, segment, stage, last_seen, csat, health"),
+        "customers": ordered("customers", columns="id, name, phone, segment, stage, last_seen, csat, health"),
         "timeline": ordered("customer_timeline", columns="title, customer, time, status"),
     })
 
@@ -1327,9 +1497,9 @@ def get_customers_data():
 def get_team_data():
     return with_page("team-members", {
         "summary": summary("team-members"),
-        "members": ordered("team_members", columns="name, role, team, status, assigned, resolved, csat"),
+        "members": ordered("team_members", columns="id, name, role, team, status, assigned, resolved, csat"),
         "teams": ordered("teams", columns="name, members, queue, sla, progress"),
-        "roles": ordered("team_roles", columns="name, count, scope"),
+        "roles": ordered("team_roles", columns="id, name, count, scope, permissions"),
     })
 
 
@@ -1337,8 +1507,8 @@ def get_billing_data():
     return with_page("billing", {
         "summary": summary("billing"),
         "usage": ordered("billing_usage", columns="name, value, progress"),
-        "invoices": ordered("invoices", columns="invoice_id AS id, date, amount, status"),
-        "add_ons": ordered("billing_addons", columns="name, detail, price, enabled"),
+        "invoices": ordered("invoices", columns="id, invoice_id, date, amount, status"),
+        "add_ons": ordered("billing_addons", columns="id, name, detail, price, enabled"),
         "contacts": ordered("billing_contacts", columns="name, email, role"),
     })
 
@@ -1369,7 +1539,7 @@ def get_add_ons_data():
     return with_page("add-ons", {
         "summary": summary("add-ons"),
         "featured": featured,
-        "marketplace": ordered("addon_modules", columns="name, category, fit, price, status"),
+        "marketplace": ordered("addon_modules", columns="id, name, category, fit, price, status"),
         "installed": installed,
         "industries": ordered("industry_recommendations", columns="name, modules, progress"),
         "estimate": ordered("subscription_estimates", columns="label, value"),
@@ -1377,13 +1547,21 @@ def get_add_ons_data():
 
 
 def get_ai_assistant_data():
-    return with_page("ai-assistant", {
+    runtime = get_ai_runtime()
+    assistants = ordered("ai_assistants", columns="id, name, model, module, status, confidence")
+    for assistant in assistants:
+        assistant["model"] = runtime["fallback_model"] if "Fallback" in assistant["name"] else runtime["primary_model"]
+    page_data = with_page("ai-assistant", {
         "summary": summary("ai-assistant"),
-        "runtime": fetch_one("SELECT * FROM ai_runtime_settings WHERE tenant_id = 1"),
-        "assistants": ordered("ai_assistants", columns="id, name, model, module, status, confidence"),
+        "runtime": runtime,
+        "assistants": assistants,
         "guardrails": ordered("ai_guardrails", columns="id, name, detail, enabled"),
         "test_cases": ordered("ai_test_cases", columns="id, prompt, intent, result"),
     })
+    for item in page_data["summary"]:
+        if item["label"] == "Primary Model":
+            item["value"] = runtime["primary_model"]
+    return page_data
 
 
 def get_ai_runtime(tenant_id=1):
@@ -1482,6 +1660,158 @@ def search_knowledge_entries(query, tenant_id=1, limit=5):
     return [knowledge_excerpt(row, terms) for row in selected]
 
 
+def global_search(query, tenant_id=1, limit=18):
+    term = f"%{query.strip()}%"
+    searches = [
+        (
+            "Conversation", "conversations", "fa-regular fa-comments",
+            """SELECT customer_name AS title, intent || ' - ' || last_message AS detail
+            FROM conversation_threads WHERE tenant_id = ? AND
+            (customer_name LIKE ? OR phone LIKE ? OR intent LIKE ? OR last_message LIKE ?)
+            ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term, term),
+        ),
+        (
+            "Customer", "customers", "fa-regular fa-user",
+            """SELECT name AS title, phone || ' - ' || segment || ' - ' || stage AS detail
+            FROM customers WHERE tenant_id = ? AND
+            (name LIKE ? OR phone LIKE ? OR segment LIKE ? OR stage LIKE ?)
+            ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term, term),
+        ),
+        (
+            "Knowledge", "knowledge_base", "fa-solid fa-book-open",
+            """SELECT title, category || ' - ' || substr(content, 1, 120) AS detail
+            FROM kb_entries WHERE tenant_id = ? AND
+            (title LIKE ? OR category LIKE ? OR content LIKE ? OR COALESCE(tags, '') LIKE ?)
+            ORDER BY updated_at DESC LIMIT 4""",
+            (tenant_id, term, term, term, term),
+        ),
+        (
+            "Prompt", "prompt_builder", "fa-solid fa-wand-magic-sparkles",
+            """SELECT name AS title, module || ' - ' || version || ' - ' || status AS detail
+            FROM prompts WHERE tenant_id = ? AND
+            (name LIKE ? OR module LIKE ? OR version LIKE ? OR instructions LIKE ?)
+            ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term, term),
+        ),
+        (
+            "Workflow", "workflows", "fa-solid fa-code-branch",
+            """SELECT name AS title, trigger || ' - ' || owner || ' - ' || status AS detail
+            FROM workflows WHERE tenant_id = ? AND
+            (name LIKE ? OR trigger LIKE ? OR owner LIKE ? OR status LIKE ?)
+            ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term, term),
+        ),
+        (
+            "Team member", "team_members", "fa-solid fa-user-group",
+            """SELECT name AS title, role || ' - ' || team || ' - ' || status AS detail
+            FROM team_members WHERE tenant_id = ? AND
+            (name LIKE ? OR role LIKE ? OR team LIKE ? OR status LIKE ?)
+            ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term, term),
+        ),
+        (
+            "Help resource", "support", "fa-regular fa-circle-question",
+            """SELECT title, detail FROM support_resources WHERE tenant_id = ? AND
+            (title LIKE ? OR detail LIKE ?) ORDER BY sort_order LIMIT 5""",
+            (tenant_id, term, term),
+        ),
+        (
+            "Support ticket", "support", "fa-solid fa-ticket",
+            """SELECT ticket_id || ' - ' || subject AS title,
+            priority || ' - ' || owner || ' - ' || status AS detail
+            FROM support_tickets WHERE tenant_id = ? AND
+            (ticket_id LIKE ? OR subject LIKE ? OR priority LIKE ? OR owner LIKE ? OR status LIKE ?)
+            ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term, term, term),
+        ),
+        (
+            "Platform service", "support", "fa-solid fa-heart-pulse",
+            """SELECT name AS title, status || ' - ' || detail AS detail
+            FROM status_checks WHERE tenant_id = ? AND
+            (name LIKE ? OR status LIKE ? OR detail LIKE ?) ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term),
+        ),
+        (
+            "Add-on", "add_ons", "fa-solid fa-puzzle-piece",
+            """SELECT name AS title, category || ' - ' || price || ' - ' || COALESCE(description, '') AS detail
+            FROM addon_modules WHERE tenant_id = ? AND
+            (name LIKE ? OR category LIKE ? OR description LIKE ? OR fit LIKE ?) ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term, term, term),
+        ),
+        (
+            "Module setting", "settings", "fa-solid fa-sliders",
+            """SELECT name AS title, owner || CASE WHEN enabled = 1 THEN ' - Enabled' ELSE ' - Disabled' END AS detail
+            FROM settings_modules WHERE tenant_id = ? AND
+            (name LIKE ? OR owner LIKE ?) ORDER BY sort_order LIMIT 4""",
+            (tenant_id, term, term),
+        ),
+    ]
+    results = []
+    endpoint_by_slug = {
+        "dashboard": "dashboard",
+        "conversations": "conversations",
+        "analytics": "analytics",
+        "settings": "settings",
+        "security": "security",
+        "support": "support",
+        "customers": "customers",
+        "team-members": "team_members",
+        "billing": "billing",
+        "add-ons": "add_ons",
+        "ai-assistant": "ai_assistant",
+        "knowledge-base": "knowledge_base",
+        "prompt-builder": "prompt_builder",
+        "workflows": "workflows",
+    }
+    with get_connection() as connection:
+        account_text = query.strip().lower()
+        if any(word in account_text for word in ["account", "profile", "personalization", "theme", "preferences"]):
+            results.append({
+                "type": "Page",
+                "page": "account_settings",
+                "icon": "fa-regular fa-user",
+                "title": "Account Settings",
+                "detail": "Manage your profile, notifications, sessions, and console personalization.",
+                "priority": 0,
+            })
+        page_rows = connection.execute(
+            """SELECT slug, title, subtitle FROM pages WHERE tenant_id = ? AND
+            (title LIKE ? OR subtitle LIKE ? OR slug LIKE ?) ORDER BY title""",
+            (tenant_id, term, term, term),
+        ).fetchall()
+        for row in page_rows:
+            endpoint = endpoint_by_slug.get(row["slug"])
+            if endpoint:
+                results.append({
+                    "type": "Page",
+                    "page": endpoint,
+                    "icon": "fa-solid fa-arrow-up-right-from-square",
+                    "title": row["title"],
+                    "detail": row["subtitle"],
+                    "priority": 0,
+                })
+        for result_type, page, icon, sql, params in searches:
+            for row in connection.execute(sql, params).fetchall():
+                results.append({
+                    "type": result_type,
+                    "page": page,
+                    "icon": icon,
+                    "title": row["title"],
+                    "detail": row["detail"],
+                    "fragment": {
+                        "Help resource": "help-center",
+                        "Support ticket": "support-tickets",
+                        "Platform service": "platform-health",
+                    }.get(result_type),
+                    "priority": 1 if result_type.startswith("Help") else 2,
+                })
+    lowered = query.strip().lower()
+    results.sort(key=lambda item: (item["priority"], not item["title"].lower().startswith(lowered), item["type"], item["title"]))
+    return results[:limit]
+
+
 def get_prompt_builder_data():
     return with_page("prompt-builder", {
         "summary": summary("prompt-builder"),
@@ -1508,6 +1838,39 @@ def update_ai_runtime(data, tenant_id=1):
             WHERE tenant_id = ?""",
             (data["primary_model"], data["fallback_model"], data["confidence_threshold"],
              data["temperature"], data["system_prompt"], tenant_id),
+        )
+        connection.execute(
+            "UPDATE ai_assistants SET model = ? WHERE tenant_id = ? AND name NOT LIKE 'Fallback%'",
+            (data["primary_model"], tenant_id),
+        )
+        connection.execute(
+            "UPDATE ai_assistants SET model = ? WHERE tenant_id = ? AND name LIKE 'Fallback%'",
+            (data["fallback_model"], tenant_id),
+        )
+        connection.execute(
+            "UPDATE settings_models SET model = ? WHERE tenant_id = ? AND name NOT LIKE 'Fallback%'",
+            (data["primary_model"], tenant_id),
+        )
+        connection.execute(
+            "UPDATE settings_models SET model = ? WHERE tenant_id = ? AND name LIKE 'Fallback%'",
+            (data["fallback_model"], tenant_id),
+        )
+        connection.commit()
+
+
+def synchronize_active_model(model, tenant_id=1):
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE ai_runtime_settings SET primary_model = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ?",
+            (model, tenant_id),
+        )
+        connection.execute(
+            "UPDATE ai_assistants SET model = ? WHERE tenant_id = ? AND name NOT LIKE 'Fallback%'",
+            (model, tenant_id),
+        )
+        connection.execute(
+            "UPDATE settings_models SET model = ? WHERE tenant_id = ? AND name NOT LIKE 'Fallback%'",
+            (model, tenant_id),
         )
         connection.commit()
 
@@ -1606,3 +1969,489 @@ def save_workflow(data, tenant_id=1):
             workflow_id = cursor.lastrowid
         connection.commit()
         return fetch_one("SELECT * FROM workflows WHERE id = ?", (workflow_id,))
+
+
+def get_topbar_items(kind, tenant_id=1):
+    tables = {
+        "notifications": ("topbar_notifications", "id, title, body, icon, url, is_read, time"),
+        "messages": ("topbar_messages", "id, sender, preview, initials, url, is_read, time"),
+    }
+    if kind not in tables:
+        raise ValueError("Unsupported inbox type")
+    table, columns = tables[kind]
+    items = fetch_all(
+        f"SELECT {columns} FROM {table} WHERE tenant_id = ? ORDER BY is_read, sort_order LIMIT 12",
+        (tenant_id,),
+    )
+    unread = fetch_one(f"SELECT COUNT(*) AS count FROM {table} WHERE tenant_id = ? AND is_read = 0", (tenant_id,))["count"]
+    return {"items": items, "unread": unread}
+
+
+def mark_topbar_items_read(kind, item_id=None, tenant_id=1):
+    tables = {"notifications": "topbar_notifications", "messages": "topbar_messages"}
+    if kind not in tables:
+        raise ValueError("Unsupported inbox type")
+    table = tables[kind]
+    with get_connection() as connection:
+        if item_id is None:
+            cursor = connection.execute(f"UPDATE {table} SET is_read = 1 WHERE tenant_id = ?", (tenant_id,))
+        else:
+            cursor = connection.execute(
+                f"UPDATE {table} SET is_read = 1 WHERE tenant_id = ? AND id = ?",
+                (tenant_id, item_id),
+            )
+        connection.commit()
+        return cursor.rowcount
+
+
+def upsert_google_user(profile):
+    google_sub = profile["sub"]
+    email = profile["email"]
+    name = profile.get("name") or email
+    picture = profile.get("picture")
+    hosted_domain = profile.get("hd")
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO dashboard_users (
+                google_sub, email, name, picture, hosted_domain, console_theme, last_login_at
+            )
+            VALUES (?, ?, ?, ?, ?, 'auto', CURRENT_TIMESTAMP)
+            ON CONFLICT(google_sub) DO UPDATE SET
+                email = excluded.email,
+                name = excluded.name,
+                picture = excluded.picture,
+                hosted_domain = excluded.hosted_domain,
+                last_login_at = CURRENT_TIMESTAMP
+            """,
+            (google_sub, email, name, picture, hosted_domain),
+        )
+        connection.commit()
+    return fetch_one(
+        """SELECT id, google_sub, email, name, picture, hosted_domain, console_theme,
+        console_density, accent_color, default_sidebar
+        FROM dashboard_users WHERE google_sub = ?""",
+        (google_sub,),
+    )
+
+
+def get_dashboard_user(user_id):
+    if not user_id:
+        return None
+    return fetch_one(
+        """SELECT id, google_sub, email, name, picture, hosted_domain, console_theme,
+        console_density, accent_color, default_sidebar
+        FROM dashboard_users WHERE id = ?""",
+        (user_id,),
+    )
+
+
+def update_dashboard_user_preferences(user_id, preferences):
+    allowed = {
+        "console_theme": {"auto", "light", "dark"},
+        "console_density": {"comfortable", "compact"},
+        "accent_color": {"teal", "blue", "green", "violet"},
+        "default_sidebar": {"expanded", "collapsed"},
+    }
+    clean = {}
+    for key, values in allowed.items():
+        value = str(preferences.get(key, "")).strip().lower()
+        if value not in values:
+            raise ValueError(f"Unsupported {key}.")
+        clean[key] = value
+    with get_connection() as connection:
+        connection.execute(
+            """UPDATE dashboard_users
+            SET console_theme = ?, console_density = ?, accent_color = ?, default_sidebar = ?
+            WHERE id = ?""",
+            (
+                clean["console_theme"],
+                clean["console_density"],
+                clean["accent_color"],
+                clean["default_sidebar"],
+                user_id,
+            ),
+        )
+        connection.commit()
+    return get_dashboard_user(user_id)
+
+
+def export_rows_csv(headers, rows):
+    import csv
+    import io
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerows(rows)
+    return output.getvalue()
+
+
+def create_customer(data, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """INSERT INTO customers
+            (tenant_id, name, phone, segment, stage, last_seen, csat, health, sort_order)
+            VALUES (?, ?, ?, ?, ?, 'Just now', ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM customers WHERE tenant_id = ?))""",
+            (
+                tenant_id,
+                data["name"],
+                data["phone"],
+                data.get("segment") or "General",
+                data.get("stage") or "New lead",
+                data.get("csat") or "N/A",
+                data.get("health") or "Neutral",
+                tenant_id,
+            ),
+        )
+        customer_id = cursor.lastrowid
+        connection.execute(
+            """INSERT INTO customer_timeline (tenant_id, title, customer, time, status, sort_order)
+            VALUES (?, 'Customer added', ?, 'Just now', 'Open',
+            (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM customer_timeline WHERE tenant_id = ?))""",
+            (tenant_id, data["name"], tenant_id),
+        )
+        connection.commit()
+    return fetch_one("SELECT * FROM customers WHERE id = ? AND tenant_id = ?", (customer_id, tenant_id))
+
+
+def update_customer(customer_id, data, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """UPDATE customers SET name = ?, phone = ?, segment = ?, stage = ?, csat = ?, health = ?,
+            last_seen = 'Just now' WHERE id = ? AND tenant_id = ?""",
+            (
+                data["name"],
+                data["phone"],
+                data.get("segment") or "General",
+                data.get("stage") or "New lead",
+                data.get("csat") or "N/A",
+                data.get("health") or "Neutral",
+                customer_id,
+                tenant_id,
+            ),
+        )
+        connection.commit()
+        if cursor.rowcount == 0:
+            return None
+    return fetch_one("SELECT * FROM customers WHERE id = ? AND tenant_id = ?", (customer_id, tenant_id))
+
+
+def create_or_update_team_member(data, member_id=None, tenant_id=1):
+    with get_connection() as connection:
+        if member_id:
+            cursor = connection.execute(
+                """UPDATE team_members SET name = ?, role = ?, team = ?, status = ?, assigned = ?, resolved = ?, csat = ?
+                WHERE id = ? AND tenant_id = ?""",
+                (
+                    data["name"],
+                    data.get("role") or "Agent",
+                    data.get("team") or "Support Desk",
+                    data.get("status") or "Invited",
+                    int(data.get("assigned") or 0),
+                    int(data.get("resolved") or 0),
+                    data.get("csat") or "N/A",
+                    member_id,
+                    tenant_id,
+                ),
+            )
+            if cursor.rowcount == 0:
+                connection.commit()
+                return None
+        else:
+            cursor = connection.execute(
+                """INSERT INTO team_members
+                (tenant_id, name, role, team, status, assigned, resolved, csat, sort_order)
+                VALUES (?, ?, ?, ?, ?, 0, 0, 'N/A',
+                (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM team_members WHERE tenant_id = ?))""",
+                (tenant_id, data["name"], data.get("role") or "Agent", data.get("team") or "Support Desk", data.get("status") or "Invited", tenant_id),
+            )
+            member_id = cursor.lastrowid
+        connection.commit()
+    return fetch_one("SELECT * FROM team_members WHERE id = ? AND tenant_id = ?", (member_id, tenant_id))
+
+
+def add_team_role(data, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """INSERT INTO team_roles (tenant_id, name, count, scope, permissions, sort_order)
+            VALUES (?, ?, 0, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM team_roles WHERE tenant_id = ?))""",
+            (tenant_id, data["name"], data.get("scope") or "Custom workspace access", data.get("permissions") or "", tenant_id),
+        )
+        role_id = cursor.lastrowid
+        connection.commit()
+    return fetch_one("SELECT * FROM team_roles WHERE id = ? AND tenant_id = ?", (role_id, tenant_id))
+
+
+def create_conversation_thread(data, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """INSERT INTO conversation_threads
+            (tenant_id, customer_name, phone, intent, module, handler, status, priority, sentiment, time, last_message, messages, sla, sort_order)
+            VALUES (?, ?, ?, ?, ?, 'AI', 'Active', ?, 'Neutral', 'Just now', ?, 1, '10m',
+            (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM conversation_threads WHERE tenant_id = ?))""",
+            (
+                tenant_id,
+                data["customer_name"],
+                data["phone"],
+                data.get("intent") or "General enquiry",
+                data.get("module") or "Support",
+                data.get("priority") or "Normal",
+                data.get("message") or "New conversation started.",
+                tenant_id,
+            ),
+        )
+        thread_id = cursor.lastrowid
+        connection.execute(
+            """INSERT INTO conversation_messages (thread_id, tenant_id, sender, role, body, sort_order)
+            VALUES (?, ?, ?, 'customer', ?, 1)""",
+            (thread_id, tenant_id, data["customer_name"], data.get("message") or "New conversation started."),
+        )
+        connection.commit()
+    return get_conversation_thread(thread_id, tenant_id)
+
+
+def get_conversation_thread(thread_id, tenant_id=1):
+    thread = fetch_one("SELECT * FROM conversation_threads WHERE id = ? AND tenant_id = ?", (thread_id, tenant_id))
+    if not thread:
+        return None
+    messages = fetch_all(
+        """SELECT id, sender, role, body, created_at FROM conversation_messages
+        WHERE thread_id = ? AND tenant_id = ? ORDER BY sort_order, id""",
+        (thread_id, tenant_id),
+    )
+    if not messages:
+        messages = [
+            {"sender": "Customer", "role": "customer", "body": thread["last_message"], "created_at": ""},
+            {"sender": "AI Assistant", "role": "assistant", "body": "I am reviewing the latest context and will respond with the next best action.", "created_at": ""},
+        ]
+    thread["messages_list"] = messages
+    return thread
+
+
+def add_conversation_message(thread_id, body, sender="Workspace Admin", role="agent", tenant_id=1):
+    with get_connection() as connection:
+        thread = connection.execute("SELECT * FROM conversation_threads WHERE id = ? AND tenant_id = ?", (thread_id, tenant_id)).fetchone()
+        if not thread:
+            return None
+        sort_order = connection.execute(
+            "SELECT COALESCE(MAX(sort_order), 0) + 1 FROM conversation_messages WHERE thread_id = ? AND tenant_id = ?",
+            (thread_id, tenant_id),
+        ).fetchone()[0]
+        cursor = connection.execute(
+            """INSERT INTO conversation_messages (thread_id, tenant_id, sender, role, body, sort_order)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (thread_id, tenant_id, sender, role, body, sort_order),
+        )
+        connection.execute(
+            """UPDATE conversation_threads SET last_message = ?, messages = messages + 1, time = 'Just now',
+            handler = CASE WHEN ? = 'agent' THEN 'Human' ELSE handler END
+            WHERE id = ? AND tenant_id = ?""",
+            (body, role, thread_id, tenant_id),
+        )
+        connection.commit()
+    return fetch_one("SELECT id, sender, role, body, created_at FROM conversation_messages WHERE id = ?", (cursor.lastrowid,))
+
+
+def assign_conversation_thread(thread_id, owner, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE conversation_threads SET handler = 'Human', status = 'Escalated', sla = 'Assigned', time = 'Just now' WHERE id = ? AND tenant_id = ?",
+            (thread_id, tenant_id),
+        )
+        connection.commit()
+    return cursor.rowcount > 0
+
+
+def update_conversation_thread_status(thread_id, status, tenant_id=1):
+    if status not in {"Active", "Waiting", "Escalated", "Resolved"}:
+        raise ValueError("Unsupported status.")
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE conversation_threads SET status = ?, sla = CASE WHEN ? = 'Resolved' THEN 'Resolved' ELSE sla END WHERE id = ? AND tenant_id = ?",
+            (status, status, thread_id, tenant_id),
+        )
+        connection.commit()
+    return cursor.rowcount > 0
+
+
+def add_support_ticket(data, tenant_id=1):
+    with get_connection() as connection:
+        next_id = connection.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM support_tickets").fetchone()[0]
+        ticket_id = f"PP-{next_id:04d}"
+        cursor = connection.execute(
+            """INSERT INTO support_tickets
+            (tenant_id, ticket_id, subject, priority, owner, status, updated, request_type, description, attachment, created_at, sort_order)
+            VALUES (?, ?, ?, ?, 'Support Desk', 'Open', 'Just now', ?, ?, ?, CURRENT_TIMESTAMP,
+            (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM support_tickets WHERE tenant_id = ?))""",
+            (
+                tenant_id,
+                ticket_id,
+                data["subject"],
+                data.get("priority") or "Normal",
+                data.get("request_type") or "Technical support",
+                data.get("description") or "",
+                data.get("attachment") or "",
+                tenant_id,
+            ),
+        )
+        connection.commit()
+    return fetch_one("SELECT * FROM support_tickets WHERE id = ?", (cursor.lastrowid,))
+
+
+def toggle_security_access_rule(rule_id, enabled, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE security_access_rules SET enabled = ? WHERE id = ? AND tenant_id = ?",
+            (int(bool(enabled)), rule_id, tenant_id),
+        )
+        connection.commit()
+    return cursor.rowcount > 0
+
+
+def save_security_settings(data, tenant_id=1):
+    with get_connection() as connection:
+        connection.execute(
+            """UPDATE workspace_settings SET require_2fa = ?, mask_phone_numbers = ?, retention_period = ?,
+            audit_export = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ?""",
+            (
+                int(bool(data.get("require_2fa", True))),
+                int(bool(data.get("mask_phone_numbers", True))),
+                data.get("retention_period") or "180 days",
+                data.get("audit_export") or "Monthly CSV",
+                tenant_id,
+            ),
+        )
+        connection.commit()
+    return fetch_one("SELECT * FROM workspace_settings WHERE tenant_id = ?", (tenant_id,))
+
+
+def save_workspace_settings(section, data, tenant_id=1):
+    with get_connection() as connection:
+        if section == "workspace":
+            connection.execute(
+                "UPDATE tenants SET name = ?, industry = ?, timezone = ?, language = ? WHERE id = ?",
+                (data["company_name"], data["industry"], data["timezone"], data["language"], tenant_id),
+            )
+        elif section == "whatsapp":
+            connection.execute(
+                "UPDATE workspace_settings SET webhook_url = ?, message_window_policy = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ?",
+                (data["webhook_url"], data["message_window_policy"], tenant_id),
+            )
+        elif section == "handoff":
+            connection.execute(
+                """UPDATE workspace_settings SET default_handoff_team = ?, sla_target = ?,
+                handoff_low_confidence = ?, handoff_negative_sentiment = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE tenant_id = ?""",
+                (
+                    data["default_handoff_team"],
+                    data["sla_target"],
+                    int(bool(data.get("handoff_low_confidence", True))),
+                    int(bool(data.get("handoff_negative_sentiment", True))),
+                    tenant_id,
+                ),
+            )
+        elif section == "ai_behavior":
+            connection.execute(
+                """UPDATE workspace_settings SET kb_grounding = ?, intent_detection = ?,
+                updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ?""",
+                (
+                    int(bool(data.get("kb_grounding", True))),
+                    int(bool(data.get("intent_detection", True))),
+                    tenant_id,
+                ),
+            )
+        elif section == "notifications":
+            connection.execute(
+                """UPDATE workspace_settings SET daily_digest = ?, escalation_alerts = ?, kb_failure_alerts = ?,
+                updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ?""",
+                (
+                    int(bool(data.get("daily_digest", True))),
+                    int(bool(data.get("escalation_alerts", True))),
+                    int(bool(data.get("kb_failure_alerts", True))),
+                    tenant_id,
+                ),
+            )
+        else:
+            raise ValueError("Unsupported settings section.")
+        connection.commit()
+    return fetch_one("SELECT * FROM workspace_settings WHERE tenant_id = ?", (tenant_id,))
+
+
+def toggle_settings_module(module_id, enabled, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE settings_modules SET enabled = ? WHERE id = ? AND tenant_id = ?",
+            (int(bool(enabled)), module_id, tenant_id),
+        )
+        connection.commit()
+    return cursor.rowcount > 0
+
+
+def toggle_billing_addon(addon_id, enabled, tenant_id=1):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE billing_addons SET enabled = ? WHERE id = ? AND tenant_id = ?",
+            (int(bool(enabled)), addon_id, tenant_id),
+        )
+        connection.commit()
+    return cursor.rowcount > 0
+
+
+def toggle_addon_cart(addon_id, selected, tenant_id=1):
+    with get_connection() as connection:
+        module = connection.execute("SELECT id, status FROM addon_modules WHERE id = ? AND tenant_id = ?", (addon_id, tenant_id)).fetchone()
+        if not module:
+            return None
+        if selected:
+            connection.execute("INSERT OR IGNORE INTO addon_cart (tenant_id, addon_module_id) VALUES (?, ?)", (tenant_id, addon_id))
+        else:
+            connection.execute("DELETE FROM addon_cart WHERE tenant_id = ? AND addon_module_id = ?", (tenant_id, addon_id))
+        connection.commit()
+    return fetch_one("SELECT * FROM addon_modules WHERE id = ? AND tenant_id = ?", (addon_id, tenant_id))
+
+
+def purchase_addon_cart(tenant_id=1, owner="Workspace Admin"):
+    with get_connection() as connection:
+        rows = connection.execute(
+            """SELECT addon_module_id FROM addon_cart WHERE tenant_id = ?""",
+            (tenant_id,),
+        ).fetchall()
+        installed = []
+        for row in rows:
+            addon_id = row["addon_module_id"]
+            connection.execute("UPDATE addon_modules SET status = 'Installed' WHERE id = ? AND tenant_id = ?", (addon_id, tenant_id))
+            connection.execute(
+                """INSERT OR IGNORE INTO tenant_addons (tenant_id, addon_module_id, owner, renewal, usage, sort_order)
+                VALUES (?, ?, ?, 'Next cycle', 'Active',
+                (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM tenant_addons WHERE tenant_id = ?))""",
+                (tenant_id, addon_id, owner, tenant_id),
+            )
+            installed.append(addon_id)
+        connection.execute("DELETE FROM addon_cart WHERE tenant_id = ?", (tenant_id,))
+        connection.commit()
+    return installed
+
+
+def save_assistant_connection(user_id, config):
+    with get_connection() as connection:
+        connection.execute(
+            """INSERT INTO assistant_connections (user_id, provider, provider_label, api_key, api_url, model)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                provider = excluded.provider,
+                provider_label = excluded.provider_label,
+                api_key = excluded.api_key,
+                api_url = excluded.api_url,
+                model = excluded.model,
+                updated_at = CURRENT_TIMESTAMP""",
+            (user_id, config["provider"], config["provider_label"], config["api_key"], config["api_url"], config["model"]),
+        )
+        connection.commit()
+
+
+def get_assistant_connection(user_id, include_key=False):
+    columns = "provider, provider_label, api_url, model, updated_at"
+    if include_key:
+        columns = f"{columns}, api_key"
+    return fetch_one(f"SELECT {columns} FROM assistant_connections WHERE user_id = ?", (user_id,))

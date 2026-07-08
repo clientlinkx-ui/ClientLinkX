@@ -25,7 +25,7 @@ Add-on Modules
                     <span class="eyebrow">Marketplace</span>
                     <h2>Recommended Add-ons</h2>
                 </div>
-                <button class="icon-button" type="button" title="Filter add-ons"><i class="fa-solid fa-sliders"></i></button>
+                <button class="icon-button" type="button" title="Filter add-ons" data-action="filter-addons"><i class="fa-solid fa-sliders"></i></button>
             </div>
 
             <div class="addon-card-grid">
@@ -44,7 +44,7 @@ Add-on Modules
                         <li><i class="fa-solid fa-check"></i>{{ feature }}</li>
                         {% endfor %}
                     </ul>
-                    <button class="primary-action addon-action" type="button"><i class="fa-solid fa-cart-plus"></i> Add to Subscription</button>
+                    <button class="primary-action addon-action" type="button" data-addon-id="{{ module.id }}"><i class="fa-solid fa-cart-plus"></i> Add to Subscription</button>
                 </article>
                 {% endfor %}
             </div>
@@ -77,8 +77,8 @@ Add-on Modules
             </div>
 
             <div class="form-actions addon-checkout-actions">
-                <button class="icon-button" type="button" title="Download quote"><i class="fa-solid fa-download"></i></button>
-                <button class="primary-action" type="button"><i class="fa-solid fa-lock"></i> Purchase Add-ons</button>
+                <button class="icon-button" type="button" title="Download quote" data-action="download-addon-quote"><i class="fa-solid fa-download"></i></button>
+                <button class="primary-action" type="button" data-action="purchase-addons"><i class="fa-solid fa-lock"></i> Purchase Add-ons</button>
             </div>
         </article>
     </section>
@@ -136,7 +136,7 @@ Add-on Modules
                 <span class="eyebrow">Catalog</span>
                 <h2>All Add-on Modules</h2>
             </div>
-            <button class="primary-action" type="button"><i class="fa-solid fa-layer-group"></i> Compare Modules</button>
+            <button class="primary-action" type="button" data-action="compare-addons"><i class="fa-solid fa-layer-group"></i> Compare Modules</button>
         </div>
 
         <div class="data-table-wrap">
@@ -164,7 +164,7 @@ Add-on Modules
                             </span>
                         </td>
                         <td>
-                            <button class="table-action" type="button">
+                            <button class="table-action" type="button" data-addon-id="{{ module.id }}">
                                 {% if module.status == 'Installed' %}Manage{% else %}Add{% endif %}
                             </button>
                         </td>

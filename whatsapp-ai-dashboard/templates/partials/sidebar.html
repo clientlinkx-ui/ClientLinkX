@@ -1,4 +1,4 @@
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar {% if preferences.default_sidebar == 'collapsed' %}is-collapsed{% endif %}" id="sidebar">
 
     <!-- ========================================= -->
     <!-- Logo -->
@@ -312,30 +312,25 @@
 
     <div class="sidebar-footer">
 
-        <div class="user-profile">
+        <a class="user-profile" href="{{ url_for('account_settings') }}" title="Manage account">
 
-            <div class="user-avatar">
-
-                <img src="{{ url_for('static', filename='images/avatar.png') }}"
-                     alt="User">
-
-            </div>
+            <div class="user-avatar">{{ account.initials }}</div>
 
             <div class="user-info">
 
-                <h4>Admin</h4>
+                <h4>{{ account.name }}</h4>
 
-                <span>System Administrator</span>
+                <span>{{ account.role }}</span>
 
             </div>
 
-            <button class="profile-menu">
+            <span class="profile-menu" aria-hidden="true">
 
-                <i class="fa-solid fa-chevron-up"></i>
+                <i class="fa-solid fa-gear"></i>
 
-            </button>
+            </span>
 
-        </div>
+        </a>
 
     </div>
 

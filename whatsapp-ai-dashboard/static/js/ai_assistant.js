@@ -74,6 +74,23 @@ const initAssistantSimulator = () => {
         return data;
     };
 
+    const restoreSavedConfig = async () => {
+        try {
+            const response = await fetch('/api/assistant/config');
+            const data = await response.json();
+            if (!response.ok || !data.ok || !data.configured) return;
+            providerSelect.value = data.provider;
+            modelInput.value = data.model;
+            apiUrlInput.value = data.api_url;
+            apiKeyInput.value = '';
+            apiKeyInput.placeholder = `${data.provider_label} key saved - leave blank to keep it`;
+            saveButton.innerHTML = '<i class="fa-solid fa-key"></i> Update Connection';
+            setStatus(`${data.provider_label}: ${data.model}`, 'good');
+        } catch (error) {
+            setStatus('Could not restore connection status', 'warning');
+        }
+    };
+
     saveButton.addEventListener('click', async () => {
         saveButton.disabled = true;
         setStatus('Connecting...', 'warning');
@@ -86,6 +103,8 @@ const initAssistantSimulator = () => {
                 model: modelInput.value,
             });
             apiKeyInput.value = '';
+            apiKeyInput.placeholder = `${data.provider_label} key saved - leave blank to keep it`;
+            saveButton.innerHTML = '<i class="fa-solid fa-key"></i> Update Connection';
             setStatus(`${data.provider_label}: ${data.model}`, 'good');
         } catch (error) {
             setStatus(error.message, 'warning');
@@ -131,6 +150,8 @@ const initAssistantSimulator = () => {
             sendMessage();
         }
     });
+
+    restoreSavedConfig();
 };
 
 if (document.readyState === 'loading') {
@@ -204,9 +225,14 @@ const initAiManagement = () => {
             } catch (error) { toggle.checked = !toggle.checked; setBadge(status, error.message, 'warning'); }
         });
     });
-    document.getElementById('runAiTestSuite')?.addEventListener('click', () => {
+    document.getElementById('runAiTestSuite')?.addEventListener('click', async () => {
+        try {
+            const data = await aiJson('/api/ai/test-suite', { method: 'POST' });
+            setBadge(status, data.message, data.result === 'Passed' ? 'good' : 'warning');
+        } catch (error) {
+            setBadge(status, error.message, 'warning');
+        }
         document.getElementById('assistantSimulatorInput')?.focus();
-        setBadge(document.getElementById('ollamaStatus'), 'Send a test message to run against the connected model', 'neutral');
     });
 };
 

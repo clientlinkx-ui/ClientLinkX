@@ -41,8 +41,8 @@ Billing
             </div>
 
             <div class="form-actions">
-                <button class="icon-button" type="button" title="Download plan"><i class="fa-solid fa-download"></i></button>
-                <button class="primary-action" type="button"><i class="fa-solid fa-arrow-up-right-dots"></i> Upgrade Plan</button>
+                <button class="icon-button" type="button" title="Download plan" data-action="download-plan"><i class="fa-solid fa-download"></i></button>
+                <button class="primary-action" type="button" data-action="upgrade-plan"><i class="fa-solid fa-arrow-up-right-dots"></i> Upgrade Plan</button>
             </div>
         </article>
 
@@ -52,7 +52,7 @@ Billing
                     <span class="eyebrow">Payment</span>
                     <h2>Payment Method</h2>
                 </div>
-                <button class="icon-button" type="button" title="Edit payment method"><i class="fa-solid fa-pen"></i></button>
+                <button class="icon-button" type="button" title="Edit payment method" data-action="edit-payment"><i class="fa-solid fa-pen"></i></button>
             </div>
 
             <div class="payment-card">
@@ -117,7 +117,7 @@ Billing
                         <strong>{{ add_on.name }}</strong>
                         <small>{{ add_on.detail }} - {{ add_on.price }}</small>
                     </span>
-                    <input type="checkbox" {% if add_on.enabled %}checked{% endif %}>
+                    <input class="billing-addon-toggle" data-id="{{ add_on.id }}" type="checkbox" {% if add_on.enabled %}checked{% endif %}>
                 </label>
                 {% endfor %}
             </div>
@@ -130,7 +130,7 @@ Billing
                 <span class="eyebrow">History</span>
                 <h2>Invoices</h2>
             </div>
-            <button class="icon-button" type="button" title="Export invoices"><i class="fa-solid fa-download"></i></button>
+            <button class="icon-button" type="button" title="Export invoices" data-action="export-invoices"><i class="fa-solid fa-download"></i></button>
         </div>
 
         <div class="data-table-wrap">
@@ -147,11 +147,11 @@ Billing
                 <tbody>
                     {% for invoice in invoices %}
                     <tr>
-                        <td><strong>{{ invoice.id }}</strong></td>
+                        <td><strong>{{ invoice.invoice_id }}</strong></td>
                         <td>{{ invoice.date }}</td>
                         <td>{{ invoice.amount }}</td>
                         <td><span class="settings-badge good">{{ invoice.status }}</span></td>
-                        <td><button class="table-action" type="button">Download</button></td>
+                        <td><button class="table-action" type="button" data-invoice-id="{{ invoice.id }}">Download</button></td>
                     </tr>
                     {% endfor %}
                 </tbody>

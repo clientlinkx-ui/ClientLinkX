@@ -25,7 +25,7 @@ Security
                     <span class="eyebrow">Access</span>
                     <h2>Security Policies</h2>
                 </div>
-                <button class="primary-action" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Policies</button>
+                <button class="primary-action" type="button" data-action="save-security"><i class="fa-solid fa-floppy-disk"></i> Save Policies</button>
             </div>
 
             <div class="rules-grid">
@@ -35,7 +35,7 @@ Security
                         <strong>{{ rule.name }}</strong>
                         <small>{{ rule.detail }}</small>
                     </span>
-                    <input type="checkbox" {% if rule.enabled %}checked{% endif %}>
+                    <input class="security-rule-toggle" data-id="{{ rule.id }}" type="checkbox" {% if rule.enabled %}checked{% endif %}>
                 </label>
                 {% endfor %}
             </div>
@@ -73,7 +73,7 @@ Security
                     <span class="eyebrow">Roles</span>
                     <h2>Workspace Permissions</h2>
                 </div>
-                <button class="icon-button" type="button" title="Add role"><i class="fa-solid fa-plus"></i></button>
+                <button class="icon-button" type="button" title="Add role" data-action="add-security-role"><i class="fa-solid fa-plus"></i></button>
             </div>
 
             <div class="data-table-wrap">
@@ -109,7 +109,7 @@ Security
             <div class="form-grid">
                 <label class="field">
                     <span>Session timeout</span>
-                    <select>
+                    <select id="securitySessionTimeout">
                         <option selected>30 minutes</option>
                         <option>1 hour</option>
                         <option>4 hours</option>
@@ -117,7 +117,7 @@ Security
                 </label>
                 <label class="field">
                     <span>Export approval</span>
-                    <select>
+                    <select id="securityAuditExport">
                         <option selected>Admin approval required</option>
                         <option>Owner approval required</option>
                         <option>Disabled</option>
@@ -125,7 +125,7 @@ Security
                 </label>
                 <label class="field">
                     <span>Allowed login region</span>
-                    <select>
+                    <select id="securityLoginRegion">
                         <option selected>India</option>
                         <option>India and UAE</option>
                         <option>Global</option>
@@ -133,7 +133,7 @@ Security
                 </label>
                 <label class="field">
                     <span>Conversation retention</span>
-                    <select>
+                    <select id="securityRetention">
                         <option selected>180 days</option>
                         <option>90 days</option>
                         <option>365 days</option>
@@ -149,7 +149,7 @@ Security
                 <span class="eyebrow">Audit</span>
                 <h2>Recent Security Events</h2>
             </div>
-            <button class="icon-button" type="button" title="Export audit log"><i class="fa-solid fa-download"></i></button>
+            <button class="icon-button" type="button" title="Export audit log" data-action="export-audit"><i class="fa-solid fa-download"></i></button>
         </div>
 
         <div class="data-table-wrap">

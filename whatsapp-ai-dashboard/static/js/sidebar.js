@@ -34,7 +34,7 @@ const initSidebar = () => {
     mobileMenuBtn?.setAttribute('aria-controls', 'sidebar');
     mobileMenuBtn?.setAttribute('aria-expanded', 'false');
     collapseBtn?.setAttribute('aria-controls', 'sidebar');
-    collapseBtn?.setAttribute('aria-expanded', 'true');
+    collapseBtn?.setAttribute('aria-expanded', String(!sidebar.classList.contains('is-collapsed')));
 
     mobileMenuBtn?.addEventListener('click', () => {
         if (sidebar.classList.contains('is-open')) {

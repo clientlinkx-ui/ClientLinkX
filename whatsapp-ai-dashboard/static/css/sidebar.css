@@ -129,7 +129,16 @@
 .user-profile {
     gap: 10px;
     border-top: 1px solid rgba(233, 251, 244, 0.12);
+    color: inherit;
     padding-top: 16px;
+    text-decoration: none;
+}
+
+.user-profile:hover .profile-menu,
+.user-profile:focus .profile-menu {
+    background: rgba(37, 211, 102, 0.18);
+    border-color: rgba(37, 211, 102, 0.42);
+    outline: 0;
 }
 
 .user-avatar {
@@ -145,13 +154,16 @@
     display: none;
 }
 
-.user-avatar::before {
-    content: "A";
-}
-
 .user-info {
     min-width: 0;
     flex: 1;
+}
+
+.user-info h4,
+.user-info span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sidebar.is-collapsed .logo-text,
@@ -172,6 +184,11 @@
 .sidebar.is-collapsed .nav-section a,
 .sidebar.is-collapsed .user-profile {
     justify-content: center;
+}
+
+.sidebar.is-collapsed .sidebar-header {
+    flex-direction: column;
+    gap: 10px;
 }
 
 .sidebar.is-collapsed .sidebar-nav {

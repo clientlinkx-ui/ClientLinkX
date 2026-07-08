@@ -15,6 +15,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface);
@@ -51,6 +52,20 @@
     display: block;
     margin-top: 4px;
     font-size: 1.35rem;
+    overflow-wrap: anywhere;
+}
+
+.summary-card div,
+.analytics-metric,
+.funnel-row > div,
+.intent-row > *,
+.customer-strip div,
+.resource-card > span,
+.payment-card > div,
+.estimate-row > *,
+.addon-card,
+.member-card {
+    min-width: 0;
 }
 
 .summary-card.warning .summary-icon {
@@ -125,6 +140,7 @@
     border: 0;
     outline: 0;
     background: transparent;
+    color: var(--text);
 }
 
 .conversation-workspace {
@@ -154,7 +170,7 @@
 
 .thread-row.active,
 .thread-row:hover {
-    border-color: rgba(18, 140, 126, 0.32);
+    border-color: var(--primary);
     background: var(--primary-soft);
 }
 
@@ -284,6 +300,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-soft);
+    color: var(--text);
     padding: 0 12px;
 }
 
@@ -319,6 +336,7 @@
     width: 100%;
     min-width: 720px;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .data-table th,
@@ -338,6 +356,10 @@
 .data-table td strong,
 .data-table td span {
     display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
 }
 
 .analytics-hero {
@@ -420,6 +442,21 @@
     grid-template-columns: minmax(0, 0.75fr) minmax(180px, 1fr);
 }
 
+.funnel-row strong,
+.funnel-row span,
+.intent-row strong,
+.intent-row span,
+.customer-strip strong,
+.customer-strip span,
+.resource-card strong,
+.resource-card small,
+.payment-card strong,
+.payment-card span,
+.estimate-row span,
+.estimate-row strong {
+    overflow-wrap: anywhere;
+}
+
 .neutral-badge {
     background: var(--surface-soft);
     color: var(--text-soft);
@@ -475,6 +512,9 @@
     color: var(--text);
     padding: 0 14px;
     font-weight: 800;
+    max-width: 100%;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .entry-actions {
@@ -489,7 +529,7 @@
 }
 
 .resource-card:hover {
-    border-color: rgba(18, 140, 126, 0.32);
+    border-color: var(--primary);
     background: var(--primary-soft);
 }
 
@@ -512,6 +552,7 @@
 }
 
 .profile-stats div {
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-soft);
@@ -522,21 +563,26 @@
     display: block;
     color: var(--muted);
     font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .profile-stats strong {
     display: block;
     margin-top: 5px;
     font-size: 1.1rem;
+    overflow-wrap: anywhere;
 }
 
 .member-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
 }
 
 .member-card {
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-soft);
@@ -553,12 +599,18 @@
 .member-card h3 {
     margin: 12px 0 4px;
     font-size: 0.98rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .member-card p {
     margin: 0;
     color: var(--muted);
     font-size: 0.84rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .member-status {
@@ -571,6 +623,10 @@
     padding: 0 9px;
     font-size: 0.75rem;
     font-weight: 850;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .member-status.online {
@@ -649,6 +705,10 @@
     padding: 0 10px;
     font-size: 0.78rem;
     font-weight: 850;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .addon-card-grid {
@@ -685,6 +745,7 @@
 .addon-card h3 {
     margin: 6px 0;
     font-size: 1rem;
+    overflow-wrap: anywhere;
 }
 
 .addon-card p {
@@ -692,6 +753,7 @@
     color: var(--text-soft);
     font-size: 0.86rem;
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .price-line {
@@ -748,7 +810,7 @@
 
 .estimate-row.total {
     background: var(--primary-soft);
-    border-color: rgba(18, 140, 126, 0.28);
+    border-color: var(--primary);
 }
 
 .estimate-row.total strong {

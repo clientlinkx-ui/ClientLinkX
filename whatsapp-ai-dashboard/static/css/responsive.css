@@ -4,7 +4,7 @@
     }
 
     .navbar-center {
-        display: none;
+        grid-column: 1 / -1;
     }
 
     .stats-grid,
@@ -69,11 +69,16 @@
     }
 
     .navbar {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr) auto;
         padding: 14px 16px;
     }
 
-    .navbar-right,
+    .navbar-right {
+        display: flex;
+    }
+
+    .navbar-right > .nav-btn,
+    .profile-dropdown,
     .profile-details,
     .navbar-divider {
         display: none;
@@ -112,6 +117,15 @@
     .conversation-item,
     .activity-item {
         align-items: flex-start;
+    }
+
+    .activity-item {
+        grid-template-columns: 38px minmax(0, 1fr);
+    }
+
+    .activity-status {
+        grid-column: 2;
+        justify-self: start;
     }
 
     .last-message,
