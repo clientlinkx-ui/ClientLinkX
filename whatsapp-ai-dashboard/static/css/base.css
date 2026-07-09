@@ -9,6 +9,10 @@ html, body {
     min-height: 100%;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: Inter, system-ui, sans-serif;
     background: var(--bg);
@@ -144,6 +148,51 @@ a {
     color: inherit;
 }
 
+button,
+a,
+input,
+select,
+textarea,
+.panel,
+.stat-card,
+.summary-card,
+.performance-card,
+.resource-card,
+.insight-card,
+.payment-card,
+.addon-card,
+.member-card,
+.activity-item,
+.conversation-item,
+.data-table tr,
+.settings-badge,
+.status-pill,
+.handler,
+.conversation-status,
+.activity-status {
+    transition:
+        background-color var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        opacity var(--motion-base) var(--ease-standard),
+        transform var(--motion-base) var(--ease-standard);
+}
+
+button:hover,
+a:hover {
+    text-decoration-thickness: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid var(--primary-soft);
+    outline-offset: 2px;
+}
+
 h1,
 h2,
 h3,
@@ -214,6 +263,7 @@ main {
     place-items: center;
     background: rgba(15, 23, 42, 0.46);
     padding: 20px;
+    backdrop-filter: blur(4px);
 }
 
 .modal-panel {

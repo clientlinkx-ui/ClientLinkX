@@ -5,7 +5,7 @@ const initSidebar = () => {
     const backdrop = document.getElementById('sidebarBackdrop');
     const desktopQuery = window.matchMedia('(min-width: 981px)');
 
-    if (!sidebar) {
+    if (!sidebar || !window.PingPilot?.initOnce(sidebar, 'sidebar')) {
         return;
     }
 
@@ -75,8 +75,5 @@ const initSidebar = () => {
     syncBreakpointState();
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSidebar);
-} else {
-    initSidebar();
-}
+window.PingPilot?.ready ? PingPilot.ready(initSidebar) : document.addEventListener('DOMContentLoaded', initSidebar);
+document.addEventListener('pingpilot:page-ready', initSidebar);

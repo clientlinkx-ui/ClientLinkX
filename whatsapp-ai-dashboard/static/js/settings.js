@@ -1,10 +1,11 @@
 const initSettingsNavigation = () => {
     const navLinks = [...document.querySelectorAll('.settings-nav a')];
+    const root = document.querySelector('.settings-page');
     const sections = navLinks
         .map((link) => document.querySelector(link.getAttribute('href')))
         .filter(Boolean);
 
-    if (!navLinks.length || !sections.length) {
+    if (!root || !navLinks.length || !sections.length || !window.PingPilot?.initOnce(root, 'settings-nav')) {
         return;
     }
 
@@ -21,6 +22,8 @@ const initSettingsNavigation = () => {
         });
     });
 
+    window.PingPilotSettingsScroll?.abort();
+    window.PingPilotSettingsScroll = new AbortController();
     window.addEventListener('scroll', () => {
         const current = sections
             .filter((section) => section.getBoundingClientRect().top < 150)
@@ -29,11 +32,11 @@ const initSettingsNavigation = () => {
         if (current) {
             setActive(current.id);
         }
-    }, { passive: true });
+    }, { passive: true, signal: window.PingPilotSettingsScroll.signal });
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSettingsNavigation);
-} else {
-    initSettingsNavigation();
-}
+window.PingPilot?.ready ? PingPilot.ready(initSettingsNavigation) : document.addEventListener('DOMContentLoaded', initSettingsNavigation);
+document.addEventListener('pingpilot:page-ready', initSettingsNavigation);
+document.addEventListener('pingpilot:before-page-swap', () => {
+    window.PingPilotSettingsScroll?.abort();
+});

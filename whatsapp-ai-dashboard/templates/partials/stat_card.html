@@ -1,4 +1,5 @@
-<div class="stat-card">
+{% set tag = 'a' if url else 'div' %}
+<{{ tag }} class="stat-card{% if url %} stat-card-link{% endif %}"{% if url %} href="{{ url }}"{% endif %} data-help="{{ help_text or title ~ ' measures ' ~ value ~ ' for the current dashboard period. Open it to inspect the related dashboard records and filters.' }}">
 
     <!-- Card Header -->
 
@@ -58,4 +59,4 @@
 
     </div>
 
-</div>
+</{{ tag }}>

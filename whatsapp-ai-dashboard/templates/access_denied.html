@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+Access Denied
+{% endblock %}
+
+{% block content %}
+<section class="work-page">
+    <article class="panel empty-state-panel">
+        <span class="summary-icon"><i class="fa-solid fa-lock"></i></span>
+        <div>
+            <span class="eyebrow">Role access</span>
+            <h2>This page is not available for your current role.</h2>
+            <p>Ask an owner or admin to update your permissions, or reset the top-bar test role if you are previewing access.</p>
+        </div>
+        <a class="primary-action" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    </article>
+</section>
+{% endblock %}

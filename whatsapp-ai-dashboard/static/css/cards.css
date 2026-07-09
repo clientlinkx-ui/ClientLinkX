@@ -9,6 +9,18 @@
     box-shadow: var(--shadow);
 }
 
+.panel:hover,
+.stat-card:hover,
+.summary-card:hover,
+.performance-card:hover,
+.resource-card:hover,
+.insight-card:hover,
+.payment-card:hover,
+.addon-card:hover,
+.member-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+}
+
 .panel {
     min-width: 0;
     padding: 20px;
@@ -186,6 +198,12 @@
     gap: 12px;
     padding: 14px;
     box-shadow: none;
+}
+
+.conversation-item:hover,
+.activity-item:hover {
+    border-color: var(--primary);
+    background: var(--surface-soft);
 }
 
 .activity-item {

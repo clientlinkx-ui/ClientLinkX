@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}
+Test WhatsApp Client
+{% endblock %}
+
+{% block content %}
+<section class="work-page test-client-page">
+    <section class="panel whatsapp-test-hero">
+        <div>
+            <span class="eyebrow">Internal Simulator</span>
+            <h2>Test WhatsApp Client</h2>
+            <p>Send customer-side WhatsApp messages into the real conversation queue and review AI escalation decisions.</p>
+        </div>
+        <div class="detail-actions">
+            <a class="secondary-action" id="openConversationLink" href="{{ url_for('conversations') }}"><i class="fa-solid fa-comments"></i> Open in Conversations</a>
+            <button class="primary-action" id="newTestCustomer" type="button"><i class="fa-solid fa-plus"></i> New Test Customer</button>
+        </div>
+    </section>
+
+    <section class="test-client-layout">
+        <article class="panel test-client-setup">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Customer</span>
+                    <h2>Test Profile</h2>
+                </div>
+                <span class="settings-badge neutral-badge" id="testClientThreadStatus">No thread</span>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Name</span>
+                    <input id="testCustomerName" type="text" value="Test Customer">
+                </label>
+                <label class="field">
+                    <span>WhatsApp number</span>
+                    <input id="testCustomerPhone" type="tel" value="+91 90000 10001">
+                </label>
+                <label class="field">
+                    <span>Module</span>
+                    <select id="testCustomerModule">
+                        <option>Support</option>
+                        <option>Sales</option>
+                        <option>Admissions</option>
+                        <option>Appointments</option>
+                        <option>Orders</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Priority</span>
+                    <select id="testCustomerPriority">
+                        <option>Normal</option>
+                        <option>High</option>
+                        <option>Urgent</option>
+                    </select>
+                </label>
+                <label class="field full-field">
+                    <span>Intent</span>
+                    <input id="testCustomerIntent" type="text" value="Test WhatsApp message">
+                </label>
+            </div>
+
+            <div class="test-decision-card" id="testDecisionCard">
+                <div>
+                    <span class="eyebrow">Routing Decision</span>
+                    <h3 id="testDecisionLabel">Waiting for first message</h3>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar"><div class="progress-fill" id="testDecisionProgress" data-progress="0"></div></div>
+                    <span class="progress-text" id="testDecisionConfidence">--</span>
+                </div>
+                <p id="testDecisionReason">Send a message to run AI escalation analysis.</p>
+                <div class="risk-flag-list" id="testDecisionFlags">No risk flags yet</div>
+            </div>
+        </article>
+
+        <article class="whatsapp-phone-panel">
+            <div class="phone-shell">
+                <header class="phone-header">
+                    <span class="avatar-placeholder" id="phoneAvatar">T</span>
+                    <div>
+                        <strong id="phoneCustomerName">Test Customer</strong>
+                        <span id="phoneCustomerMeta">online - internal simulator</span>
+                    </div>
+                </header>
+
+                <div class="phone-timeline" id="testClientTimeline">
+                    <div class="phone-empty-state">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <strong>No messages yet</strong>
+                        <span>Type a customer message below to create a real conversation thread.</span>
+                    </div>
+                </div>
+
+                <form class="phone-composer" id="testClientForm">
+                    <input id="testClientMessage" type="text" placeholder="Type a customer WhatsApp message..." autocomplete="off">
+                    <button class="primary-action" type="submit" aria-label="Send test message"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </article>
+    </section>
+</section>
+{% endblock %}

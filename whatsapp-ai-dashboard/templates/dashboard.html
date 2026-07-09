@@ -6,57 +6,66 @@ WhatsApp AI Customer Dashboard
 
 {% block content %}
 <section class="dashboard">
-    <section class="overview-strip" aria-label="Workspace overview">
+    <section class="overview-strip" aria-label="Workspace overview" data-help="This workspace summary shows the company currently connected to PingPilot and the business areas where the WhatsApp AI assistant is active. Use it as a quick orientation point before reviewing metrics below.">
         <div class="overview-copy">
             <span class="eyebrow">Live workspace</span>
-            <h2>EverTech Solutions</h2>
-            <p>AI assistant is handling WhatsApp conversations across sales, support, admissions, appointments, and orders.</p>
+            <h2>{{ workspace.company_name }}</h2>
+            <p>PingPilot is reading live workspace data across conversations, handoffs, modules, AI routing, and recent activity.</p>
         </div>
 
         <div class="overview-actions">
-            <button class="icon-button" type="button" title="Export report">
+            <span class="dashboard-updated" id="dashboardLastUpdated">Updated {{ updated_at }}</span>
+            <button class="icon-button" id="dashboardRefresh" type="button" title="Refresh dashboard" data-help="Refresh dashboard metrics from the database without changing your current filters or dashboard theme.">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+            {% if can_access('export_data') %}
+            <button class="icon-button" id="dashboardExportReport" type="button" title="Export report" data-help="Download a CSV snapshot of the dashboard metrics, business module outcomes, and handoff queue counts. This is useful for sharing a quick operating report with leadership.">
                 <i class="fa-solid fa-download"></i>
             </button>
-            <button class="primary-action" type="button">
+            {% endif %}
+            {% if can_access('page_settings') %}
+            <a class="primary-action" href="{{ url_for('settings') }}#ai" data-help="Open AI settings where admins can tune model behavior, handoff rules, confidence thresholds, and connected WhatsApp settings.">
                 <i class="fa-solid fa-sliders"></i>
                 Configure AI
-            </button>
+            </a>
+            {% endif %}
         </div>
     </section>
 
     <section class="stats-grid" aria-label="Key metrics">
         {% for stat in stats %}
-            {% with title=stat.title, value=stat.value, change=stat.change, trend=stat.trend, icon=stat.icon %}
+            {% with title=stat.title, value=stat.value, change=stat.change, trend=stat.trend, icon=stat.icon, url=stat.url, help_text=stat.help %}
                 {% include 'partials/stat_card.html' %}
             {% endwith %}
         {% endfor %}
     </section>
 
     <section class="dashboard-grid dashboard-grid-main">
-        <article class="panel traffic-panel">
+        <article class="panel traffic-panel" data-help="Conversation Traffic compares how many WhatsApp conversations were handled by AI versus escalated to humans. Change the range to inspect short-term spikes or longer-term routing trends.">
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">Volume</span>
                     <h2>Conversation Traffic</h2>
                 </div>
                 <div class="segmented-control" aria-label="Chart range">
-                    <button class="active" type="button">7D</button>
-                    <button type="button">30D</button>
-                    <button type="button">90D</button>
+                    <button class="active" type="button" data-range="7d">7D</button>
+                    <button type="button" data-range="30d">30D</button>
+                    <button type="button" data-range="90d">90D</button>
                 </div>
             </div>
             <div class="chart-frame">
                 <canvas id="trafficChart" aria-label="Conversation traffic chart"></canvas>
+                <div class="chart-state" data-chart-state hidden></div>
             </div>
         </article>
 
-        <article class="panel model-panel">
+        <article class="panel model-panel" data-help="Runtime Status shows the active AI model, deployment version, latency, and health of connected systems. Use it to confirm the assistant is ready before increasing automation.">
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">AI Model</span>
                     <h2>Runtime Status</h2>
                 </div>
-                <span class="status-pill online">Online</span>
+                <span class="status-pill {{ runtime_status.status_tone }}">{{ runtime_status.status_label }}</span>
             </div>
 
             <div class="model-card">
@@ -64,38 +73,38 @@ WhatsApp AI Customer Dashboard
                     <i class="fa-solid fa-brain"></i>
                 </div>
                 <div>
-                    <h3>{{ ai_runtime.primary_model }}</h3>
-                    <p>Primary model for customer support and lead qualification.</p>
+                    <h3>{{ runtime_status.model }}</h3>
+                    <p>{{ runtime_status.description }}</p>
                 </div>
             </div>
 
             <div class="model-metrics">
                 <div>
-                    <span>Accuracy</span>
-                    <strong>93.8%</strong>
+                    <span>Provider</span>
+                    <strong>{{ runtime_status.provider }}</strong>
                 </div>
                 <div>
-                    <span>Avg latency</span>
-                    <strong>1.2s</strong>
+                    <span>Confidence</span>
+                    <strong>{{ runtime_status.confidence }}%</strong>
                 </div>
                 <div>
                     <span>Prompt version</span>
-                    <strong>v{{ ai_runtime.deployment_version }}</strong>
+                    <strong>v{{ runtime_status.deployment_version }}</strong>
                 </div>
             </div>
 
             <div class="health-list">
                 <div>
                     <span>WhatsApp API</span>
-                    <strong class="good">Healthy</strong>
+                    <strong class="good">{{ runtime_status.whatsapp_status }}</strong>
                 </div>
                 <div>
                     <span>Knowledge base</span>
-                    <strong class="good">Synced</strong>
+                    <strong class="good">{{ runtime_status.kb_status }}</strong>
                 </div>
                 <div>
                     <span>Human handoff</span>
-                    <strong class="warning">4 queues active</strong>
+                    <strong class="warning">{{ runtime_status.handoff_status }}</strong>
                 </div>
             </div>
         </article>
@@ -108,14 +117,20 @@ WhatsApp AI Customer Dashboard
                     <span class="eyebrow">Outcomes</span>
                     <h2>Business Modules</h2>
                 </div>
-                <button class="icon-button" type="button" title="Manage modules">
+                {% if can_access('page_settings') %}
+                <a class="icon-button" href="{{ url_for('settings') }}#modules" title="Manage modules" data-help="Open module settings to enable or disable business modules such as admissions, orders, appointments, sales, and support.">
                     <i class="fa-solid fa-gear"></i>
-                </button>
+                </a>
+                {% endif %}
             </div>
 
             <div class="module-grid">
                 {% for module in modules %}
-                <div class="module-card">
+                {% if can_access('page_analytics') %}
+                <a class="module-card" href="{{ module.url or url_for('analytics') }}" data-help="{{ module.name }} tracks the outcome volume for this business module. The progress bar shows relative performance against the current operating target.">
+                {% else %}
+                <div class="module-card" data-help="{{ module.name }} tracks the outcome volume for this business module. The progress bar shows relative performance against the current operating target.">
+                {% endif %}
                     <div class="module-top">
                         <span class="module-icon"><i class="{{ module.icon }}"></i></span>
                         <strong>{{ module.name }}</strong>
@@ -125,34 +140,46 @@ WhatsApp AI Customer Dashboard
                     <div class="progress-bar">
                         <div class="progress-fill" data-progress="{{ module.progress }}"></div>
                     </div>
+                {% if can_access('page_analytics') %}
+                </a>
+                {% else %}
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </article>
 
-        <article class="panel">
+        <article class="panel" data-help="The handoff queue shows open human escalations by team. Higher counts or longer SLA values indicate where customers may be waiting for staff action.">
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">Escalations</span>
                     <h2>Handoff Queue</h2>
                 </div>
-                <span class="queue-total">98 open</span>
+                <span class="queue-total">{{ handoff_total }} open</span>
             </div>
 
             <div class="queue-list">
                 {% for escalation in escalations %}
-                <div class="queue-item">
+                {% if can_access('page_conversations') %}
+                <a class="queue-item" href="{{ escalation.url or url_for('conversations') }}" data-help="{{ escalation.team }} currently owns {{ escalation.count }} open escalations. Average SLA indicates the typical response or resolution wait for this queue.">
+                {% else %}
+                <div class="queue-item" data-help="{{ escalation.team }} currently owns {{ escalation.count }} open escalations. Average SLA indicates the typical response or resolution wait for this queue.">
+                {% endif %}
                     <div>
                         <strong>{{ escalation.team }}</strong>
                         <span>Avg SLA {{ escalation.sla }}</span>
                     </div>
                     <div class="queue-count {{ escalation.tone }}">{{ escalation.count }}</div>
+                {% if can_access('page_conversations') %}
+                </a>
+                {% else %}
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </article>
 
-        <article class="panel status-panel">
+        <article class="panel status-panel" data-help="Conversation Status summarizes how conversations ended or where they currently sit, including AI-resolved, waiting, escalated, and abandoned threads.">
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">Quality</span>
@@ -161,6 +188,7 @@ WhatsApp AI Customer Dashboard
             </div>
             <div class="chart-frame compact">
                 <canvas id="statusChart" aria-label="Conversation status chart"></canvas>
+                <div class="chart-state" data-chart-state hidden></div>
             </div>
         </article>
     </section>
@@ -172,24 +200,31 @@ WhatsApp AI Customer Dashboard
                     <span class="eyebrow">Inbox</span>
                     <h2>Recent Conversations</h2>
                 </div>
-                <a href="#">View all</a>
+                {% if can_access('page_conversations') %}
+                <a href="{{ url_for('conversations') }}" data-help="Open the Conversations tab to inspect every WhatsApp thread, message timeline, assignment, escalation state, and AI routing recommendation.">View all</a>
+                {% endif %}
             </div>
 
             <div class="conversation-list">
                 {% for conversation in conversations %}
-                    {% with customer_name=conversation.customer_name, avatar=conversation.avatar, time=conversation.time, last_message=conversation.last_message, handler=conversation.handler, status=conversation.status, unread=conversation.unread %}
+                    {% with customer_name=conversation.customer_name, avatar=conversation.avatar, time=conversation.time, last_message=conversation.last_message, handler=conversation.handler, status=conversation.status, unread=conversation.unread, conversation_url=conversation.url %}
                         {% include 'partials/conversation_item.html' %}
                     {% endwith %}
+                {% else %}
+                    <div class="empty-state">No conversations have been recorded yet.</div>
                 {% endfor %}
             </div>
         </article>
 
-        <article class="panel activity-panel">
+        <article class="panel activity-panel" data-help="Recent Activity is an audit-style feed of important workspace events such as exports, deployments, logins, and administrative actions.">
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">Audit Trail</span>
                     <h2>Recent Activity</h2>
                 </div>
+                {% if can_access('page_security') %}
+                <a href="{{ url_for('security') }}#audit" data-help="Open the Security audit log for the full history of role changes, exports, settings updates, and access events.">View audit log</a>
+                {% endif %}
             </div>
 
             <div class="activity-list">
@@ -197,6 +232,8 @@ WhatsApp AI Customer Dashboard
                     {% with title=activity.title, description=activity.description, activity_type=activity.activity_type, icon=activity.icon, time=activity.time, user=activity.user, status=activity.status %}
                         {% include 'partials/activity_item.html' %}
                     {% endwith %}
+                {% else %}
+                    <div class="empty-state">No recent workspace activity has been recorded yet.</div>
                 {% endfor %}
             </div>
         </article>

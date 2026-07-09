@@ -8,21 +8,41 @@ const chartDefaults = () => {
     Chart.defaults.plugins.legend.labels.usePointStyle = true;
 };
 
-const renderTrafficChart = () => {
+const trafficRanges = {
+    '7d': {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        ai: [1840, 2140, 2380, 2210, 2690, 2860, 3120],
+        human: [210, 248, 224, 276, 240, 196, 178],
+    },
+    '30d': {
+        labels: ['W1', 'W2', 'W3', 'W4', 'Now'],
+        ai: [8420, 9210, 10480, 11340, 12620],
+        human: [940, 880, 802, 724, 690],
+    },
+    '90d': {
+        labels: ['Apr', 'May', 'Jun', 'Jul'],
+        ai: [28400, 34600, 41200, 46300],
+        human: [3820, 3440, 2960, 2510],
+    },
+};
+
+const renderTrafficChart = (range = '7d', chartData = null) => {
     const canvas = document.getElementById('trafficChart');
 
     if (!canvas || !window.Chart) {
         return;
     }
 
+    const selected = chartData || trafficRanges[range] || trafficRanges['7d'];
+    Chart.getChart(canvas)?.destroy();
     new Chart(canvas, {
         type: 'line',
         data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            labels: selected.labels,
             datasets: [
                 {
                     label: 'AI handled',
-                    data: [1840, 2140, 2380, 2210, 2690, 2860, 3120],
+                    data: selected.ai,
                     borderColor: '#128c7e',
                     backgroundColor: 'rgba(18, 140, 126, 0.12)',
                     fill: true,
@@ -32,7 +52,7 @@ const renderTrafficChart = () => {
                 },
                 {
                     label: 'Human escalated',
-                    data: [210, 248, 224, 276, 240, 196, 178],
+                    data: selected.human,
                     borderColor: '#d97706',
                     backgroundColor: 'rgba(217, 119, 6, 0.08)',
                     fill: true,
@@ -63,7 +83,7 @@ const renderTrafficChart = () => {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: (value) => `${value / 1000}k`,
+                        callback: (value) => value >= 1000 ? `${value / 1000}k` : value,
                     },
                     grid: {
                         color: '#eef2f6',
@@ -74,20 +94,26 @@ const renderTrafficChart = () => {
     });
 };
 
-const renderStatusChart = () => {
+const renderStatusChart = (chartData = null) => {
     const canvas = document.getElementById('statusChart');
 
     if (!canvas || !window.Chart) {
         return;
     }
 
+    const selected = chartData || {
+        labels: ['Resolved by AI', 'Waiting', 'Escalated', 'Abandoned'],
+        values: [68, 14, 12, 6],
+    };
+
+    Chart.getChart(canvas)?.destroy();
     new Chart(canvas, {
         type: 'doughnut',
         data: {
-            labels: ['Resolved by AI', 'Waiting', 'Escalated', 'Abandoned'],
+            labels: selected.labels,
             datasets: [
                 {
-                    data: [68, 14, 12, 6],
+                    data: selected.values,
                     backgroundColor: ['#128c7e', '#2563eb', '#d97706', '#dc2626'],
                     borderWidth: 0,
                     hoverOffset: 6,
@@ -114,6 +140,7 @@ const renderAnalyticsVolumeChart = () => {
         return;
     }
 
+    Chart.getChart(canvas)?.destroy();
     new Chart(canvas, {
         type: 'bar',
         data: {
@@ -165,6 +192,7 @@ const renderAnalyticsIntentChart = () => {
         return;
     }
 
+    Chart.getChart(canvas)?.destroy();
     new Chart(canvas, {
         type: 'doughnut',
         data: {
@@ -197,6 +225,7 @@ const renderSatisfactionChart = () => {
         return;
     }
 
+    Chart.getChart(canvas)?.destroy();
     new Chart(canvas, {
         type: 'line',
         data: {
@@ -251,8 +280,10 @@ const initCharts = () => {
     renderSatisfactionChart();
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCharts);
-} else {
-    initCharts();
-}
+window.PingPilotCharts = {
+    renderTrafficChart,
+    renderStatusChart,
+};
+
+window.PingPilot?.ready ? PingPilot.ready(initCharts) : document.addEventListener('DOMContentLoaded', initCharts);
+document.addEventListener('pingpilot:page-ready', initCharts);

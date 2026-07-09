@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ClientLinkX}/whatsapp-ai-dashboard/macos/PingPilotGlass",
+            "name": "Debug PingPilotGlass (whatsapp-ai-dashboard/macos/PingPilotGlass)",
+            "target": "PingPilotGlass",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug PingPilotGlass (whatsapp-ai-dashboard/macos/PingPilotGlass)"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ClientLinkX}/whatsapp-ai-dashboard/macos/PingPilotGlass",
+            "name": "Release PingPilotGlass (whatsapp-ai-dashboard/macos/PingPilotGlass)",
+            "target": "PingPilotGlass",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release PingPilotGlass (whatsapp-ai-dashboard/macos/PingPilotGlass)"
+        }
+    ]
+}

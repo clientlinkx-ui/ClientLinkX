@@ -23,21 +23,21 @@ Billing
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">Subscription</span>
-                    <h2>Growth Plan</h2>
+                    <h2>{{ plan.name }} Plan</h2>
                 </div>
                 <span class="status-pill online">Active</span>
             </div>
 
             <div class="plan-price">
-                <strong>Rs 84,200</strong>
-                <span>per month - renews on August 1, 2026</span>
+                <strong>{{ plan.current_price }}</strong>
+                <span>per {{ 'year' if plan.billing_cycle == 'yearly' else 'month' }} - simulated billing</span>
             </div>
 
             <div class="plan-feature-grid">
-                <div><i class="fa-solid fa-check"></i> 25,000 conversations</div>
-                <div><i class="fa-solid fa-check"></i> 200,000 AI messages</div>
-                <div><i class="fa-solid fa-check"></i> 100 team seats</div>
-                <div><i class="fa-solid fa-check"></i> Advanced routing</div>
+                <div><i class="fa-solid fa-check"></i> {{ plan.conversation_limit }}</div>
+                <div><i class="fa-solid fa-check"></i> {{ plan.ai_message_limit }}</div>
+                <div><i class="fa-solid fa-check"></i> {{ plan.seat_limit }}</div>
+                <div><i class="fa-solid fa-check"></i> {{ plan.support_level }}</div>
             </div>
 
             <div class="form-actions">

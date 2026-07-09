@@ -118,6 +118,20 @@
     color: #ffffff;
 }
 
+.nav-section a:hover {
+    transform: translateX(2px);
+}
+
+.sidebar.is-collapsed .nav-section a:hover {
+    transform: translateY(-1px);
+}
+
+.collapse-btn:hover,
+.profile-menu:hover {
+    border-color: rgba(37, 211, 102, 0.42);
+    background: rgba(37, 211, 102, 0.18);
+}
+
 .nav-section i {
     width: 18px;
 }

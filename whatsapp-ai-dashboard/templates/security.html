@@ -73,24 +73,33 @@ Security
                     <span class="eyebrow">Roles</span>
                     <h2>Workspace Permissions</h2>
                 </div>
+                {% if can_access('manage_roles') %}
                 <button class="icon-button" type="button" title="Add role" data-action="add-security-role"><i class="fa-solid fa-plus"></i></button>
+                {% endif %}
             </div>
 
             <div class="data-table-wrap">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Role</th>
+                            <th>Group</th>
                             <th>Users</th>
                             <th>Permissions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for role in roles %}
+                        {% for group in permission_groups %}
                         <tr>
-                            <td><strong>{{ role.role }}</strong></td>
-                            <td>{{ role.users }}</td>
-                            <td>{{ role.permissions }}</td>
+                            <td>
+                                <strong>{{ group.name }}</strong>
+                                {% if group.key == 'owner' %}
+                                <span class="settings-badge warning">Locked</span>
+                                {% elif group.locked %}
+                                <span class="settings-badge neutral-badge">System</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ group.users }}</td>
+                            <td>{{ group.permissions_text }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -141,6 +150,48 @@ Security
                 </label>
             </div>
         </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Access</span>
+                <h2>Dashboard Users</h2>
+            </div>
+        </div>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Permission Group</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in dashboard_users %}
+                    <tr>
+                        <td><strong>{{ user.name }}</strong></td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if can_access('assign_roles') and not user.is_owner %}
+                            <select class="compact-select dashboard-permission-group-select" data-user-id="{{ user.id }}" aria-label="Permission group for {{ user.name }}">
+                                {% for group in permission_groups %}
+                                <option value="{{ group.key }}" {% if user.permission_group == group.key %}selected{% endif %} {% if group.key == 'owner' %}disabled{% endif %}>{{ group.name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% else %}
+                            <span class="settings-badge {% if user.is_owner %}warning{% else %}neutral-badge{% endif %}">{{ user.permission_label }}{% if user.is_owner %} · Locked{% endif %}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.last_login_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <section class="panel">

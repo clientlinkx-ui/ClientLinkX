@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding | PingPilot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body class="login-body onboarding-body">
+    <main class="onboarding-shell" data-onboarding>
+        <aside class="onboarding-rail">
+            <span class="login-mark">PP</span>
+            <div>
+                <span class="eyebrow">PingPilot setup</span>
+                <h1>Launch your WhatsApp AI workspace.</h1>
+                <p>Register the company, verify ownership through email and WhatsApp, then choose the plan that fits your launch.</p>
+            </div>
+            <ol class="onboarding-steps" aria-label="Onboarding steps">
+                <li class="active" data-step-dot="account"><span>1</span>Account</li>
+                <li data-step-dot="company"><span>2</span>Company</li>
+                <li data-step-dot="email"><span>3</span>Email</li>
+                <li data-step-dot="whatsapp"><span>4</span>WhatsApp</li>
+                <li data-step-dot="plan"><span>5</span>Plan</li>
+                <li data-step-dot="review"><span>6</span>Review</li>
+            </ol>
+        </aside>
+
+        <section class="onboarding-panel">
+            <div class="onboarding-status" id="onboardingStatus">Progress is saved automatically.</div>
+
+            <form class="onboarding-step active" data-step="account">
+                <span class="eyebrow">Step 1</span>
+                <h2>Account owner</h2>
+                <p>Confirm the person who will become workspace owner after verification.</p>
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Name</span>
+                        <input name="name" type="text" value="{{ current_user.name }}">
+                    </label>
+                    <label class="field">
+                        <span>Email</span>
+                        <input name="email" type="email" value="{{ current_user.email }}">
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button class="primary-action" type="submit">Continue <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </form>
+
+            <form class="onboarding-step" data-step="company">
+                <span class="eyebrow">Step 2</span>
+                <h2>Company profile</h2>
+                <p>This becomes your PingPilot workspace profile and billing identity.</p>
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Company name</span>
+                        <input name="company_name" type="text" value="{{ session_data.company_name }}">
+                    </label>
+                    <label class="field">
+                        <span>Business type</span>
+                        <select name="industry">
+                            {% for item in ['Education', 'Healthcare', 'Ecommerce', 'Automotive', 'Real estate', 'Hospitality', 'Financial services', 'Other'] %}
+                            <option value="{{ item }}" {% if session_data.industry == item %}selected{% endif %}>{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Timezone</span>
+                        <select name="timezone">
+                            {% for item in ['Asia/Kolkata', 'Asia/Dubai', 'Europe/London', 'America/New_York', 'America/Los_Angeles'] %}
+                            <option value="{{ item }}" {% if session_data.timezone == item %}selected{% endif %}>{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Primary language</span>
+                        <select name="language">
+                            {% for item in ['English', 'Hindi', 'Arabic', 'Spanish', 'French'] %}
+                            <option value="{{ item }}" {% if session_data.language == item %}selected{% endif %}>{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Company email</span>
+                        <input name="company_email" type="email" value="{{ session_data.company_email or current_user.email }}">
+                    </label>
+                    <label class="field">
+                        <span>WhatsApp number</span>
+                        <input name="company_phone" type="tel" placeholder="+91 98765 43210" value="{{ session_data.company_phone }}">
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button class="secondary-action" type="button" data-back="account"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="primary-action" type="submit">Continue <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </form>
+
+            <section class="onboarding-step" data-step="email">
+                <span class="eyebrow">Step 3</span>
+                <h2>Verify company email</h2>
+                <p>Send a code to the company email and enter it here.</p>
+                <div class="verification-card">
+                    <span class="settings-badge neutral-badge" id="emailVerifiedBadge">Not verified</span>
+                    <button class="secondary-action" type="button" data-send-code="email"><i class="fa-regular fa-envelope"></i> Send Code</button>
+                    <label class="field">
+                        <span>Email code</span>
+                        <input id="emailCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+                    </label>
+                    <button class="primary-action" type="button" data-check-code="email">Verify Email</button>
+                    <small class="dev-code" id="emailDevCode" hidden></small>
+                </div>
+                <div class="form-actions">
+                    <button class="secondary-action" type="button" data-back="company"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="primary-action" type="button" data-next="whatsapp">Continue <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </section>
+
+            <section class="onboarding-step" data-step="whatsapp">
+                <span class="eyebrow">Step 4</span>
+                <h2>Verify WhatsApp</h2>
+                <p>Confirm the company WhatsApp number that customers will use.</p>
+                <div class="verification-card">
+                    <span class="settings-badge neutral-badge" id="whatsappVerifiedBadge">Not verified</span>
+                    <button class="secondary-action" type="button" data-send-code="whatsapp"><i class="fa-brands fa-whatsapp"></i> Send Code</button>
+                    <label class="field">
+                        <span>WhatsApp code</span>
+                        <input id="whatsappCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+                    </label>
+                    <button class="primary-action" type="button" data-check-code="whatsapp">Verify WhatsApp</button>
+                    <small class="dev-code" id="whatsappDevCode" hidden></small>
+                </div>
+                <div class="form-actions">
+                    <button class="secondary-action" type="button" data-back="email"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="primary-action" type="button" data-next="plan">Continue <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </section>
+
+            <section class="onboarding-step" data-step="plan">
+                <span class="eyebrow">Step 5</span>
+                <h2>Choose a plan</h2>
+                <p>Pick the subscription you want to start with. Payment collection is simulated for now.</p>
+                <div class="billing-cycle-toggle" role="group" aria-label="Billing cycle">
+                    <button class="active" type="button" data-cycle="monthly">Monthly</button>
+                    <button type="button" data-cycle="yearly">Yearly</button>
+                </div>
+                <div class="onboarding-plan-grid">
+                    {% for plan in plans %}
+                    <button class="plan-choice {% if session_data.selected_plan == plan.plan_key %}active{% endif %}" type="button" data-plan="{{ plan.plan_key }}">
+                        <span>{{ plan.name }}</span>
+                        <strong data-monthly="{{ plan.monthly_price }}" data-yearly="{{ plan.yearly_price }}">{{ plan.monthly_price }}</strong>
+                        <small>{{ plan.conversation_limit }} · {{ plan.seat_limit }}</small>
+                        <em>{{ plan.support_level }}</em>
+                    </button>
+                    {% endfor %}
+                </div>
+                <div class="form-actions">
+                    <button class="secondary-action" type="button" data-back="whatsapp"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="primary-action" type="button" data-save-plan>Continue <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </section>
+
+            <section class="onboarding-step" data-step="review">
+                <span class="eyebrow">Step 6</span>
+                <h2>Review and create workspace</h2>
+                <p>Once created, your account becomes the protected workspace owner.</p>
+                <div class="review-grid" id="reviewGrid"></div>
+                <div class="form-actions">
+                    <button class="secondary-action" type="button" data-back="plan"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="primary-action" type="button" data-complete-onboarding><i class="fa-solid fa-circle-check"></i> Create Workspace</button>
+                </div>
+            </section>
+        </section>
+    </main>
+    <script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
+</body>
+</html>

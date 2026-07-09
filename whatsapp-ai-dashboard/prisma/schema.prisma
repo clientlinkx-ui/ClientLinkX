@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BusinessType {
+  RETAIL
+  HOSPITALITY
+}
+
+enum TransactionType {
+  PAYMENT
+  REFUND
+  LOYALTY_ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Business {
+  id              String             @id @default(cuid())
+  name            String
+  businessType    BusinessType
+  primaryLanguage String             @default("en")
+  locationGeo     String
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  campaigns       Campaign[]
+  loyalties       CustomerLoyalty[]
+  transactions    Transaction[]
+}
+
+model User {
+  id           String             @id @default(cuid())
+  phone        String             @unique
+  name         String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  loyalties    CustomerLoyalty[]
+  transactions Transaction[]
+}
+
+model CustomerLoyalty {
+  id            String   @id @default(cuid())
+  businessId    String
+  userId        String
+  pointsBalance Int      @default(0)
+  stampCount    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, userId])
+  @@index([userId])
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  businessId      String
+  userId          String
+  paymentProvider String?
+  providerOrderId String?
+  providerPaymentId String?
+  amount          Decimal           @db.Decimal(12, 2)
+  currency        String            @default("INR")
+  transactionType TransactionType
+  status          TransactionStatus @default(PENDING)
+  pointsEarned    Int               @default(0)
+  metadata        Json              @db.JsonB
+  createdAt       DateTime          @default(now())
+  business        Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@index([userId])
+}
+
+model Campaign {
+  id            String   @id @default(cuid())
+  businessId    String
+  header        String
+  isActive      Boolean  @default(true)
+  triggerRadius Float
+  messageBody   Json     @db.JsonB
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, isActive])
+}

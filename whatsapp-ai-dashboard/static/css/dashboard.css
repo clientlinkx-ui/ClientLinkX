@@ -46,7 +46,35 @@
 .overview-actions {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 10px;
+}
+
+.dashboard-updated {
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.stat-card-link {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.stat-card-link:hover {
+    transform: translateY(-1px);
+}
+
+.icon-button.is-spinning i {
+    animation: dashboardSpin 800ms linear infinite;
+}
+
+@keyframes dashboardSpin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .primary-action {
@@ -64,6 +92,12 @@
     max-width: 100%;
     text-align: center;
     overflow-wrap: anywhere;
+}
+
+.primary-action:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 22%, transparent);
+    transform: translateY(-1px);
 }
 
 .stats-grid,
@@ -105,6 +139,29 @@
 
 .chart-frame.compact {
     height: 230px;
+}
+
+.chart-state {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-weight: 800;
+    text-align: center;
+    padding: 18px;
+    z-index: 2;
+}
+
+.chart-state[hidden] {
+    display: none;
+}
+
+.panel.is-loading canvas {
+    opacity: 0.38;
 }
 
 .segmented-control {
@@ -216,10 +273,21 @@
 }
 
 .module-card {
+    display: block;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-soft);
+    color: var(--text);
     padding: 14px;
+    text-decoration: none;
+}
+
+.module-card:hover,
+.queue-item:hover,
+.conversation-item:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    transform: translateY(-1px);
 }
 
 .module-top {
@@ -252,9 +320,29 @@
     color: var(--danger);
 }
 
+.status-pill.warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.empty-state {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    padding: 16px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
 .queue-item strong,
 .queue-item span {
     display: block;
+}
+
+.queue-item,
+.conversation-item {
+    color: var(--text);
+    text-decoration: none;
 }
 
 .queue-item span {
@@ -278,4 +366,33 @@
 .queue-count.warning {
     background: var(--warning-soft);
     color: var(--warning);
+}
+
+.dashboard-help-popover {
+    position: absolute;
+    z-index: 40;
+    max-width: min(360px, calc(100vw - 24px));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    padding: 12px 14px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    transition:
+        opacity 160ms ease,
+        transform 180ms ease;
+    pointer-events: none;
+}
+
+.dashboard-help-popover.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.dashboard-help-popover[hidden] {
+    display: none;
 }

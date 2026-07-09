@@ -182,6 +182,13 @@ Settings
                             <option>Under 1 hour</option>
                         </select>
                     </label>
+                    <label class="field full-field">
+                        <span>Escalation decision mode</span>
+                        <select id="escalationDecisionMode">
+                            <option value="recommend" {% if workspace_settings.escalation_decision_mode != 'auto' %}selected{% endif %}>Recommend only</option>
+                            <option value="auto" {% if workspace_settings.escalation_decision_mode == 'auto' %}selected{% endif %}>Auto-escalate high-risk conversations</option>
+                        </select>
+                    </label>
                 </div>
             </section>
 

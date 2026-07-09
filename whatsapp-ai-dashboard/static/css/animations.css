@@ -3,9 +3,73 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes panelIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .stat-card,
 .performance-card,
 .activity-item,
 .conversation-item {
-    animation: fadeIn 0.4s ease;
+    animation: fadeIn var(--motion-slow) var(--ease-standard);
+}
+
+body.is-page-transitioning main {
+    pointer-events: none;
+}
+
+main {
+    outline: 0;
+}
+
+main.page-enter {
+    animation: fadeIn var(--motion-slow) var(--ease-standard);
+}
+
+main.page-exit {
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+        opacity var(--motion-base) var(--ease-standard),
+        transform var(--motion-base) var(--ease-standard);
+}
+
+.modal-backdrop:not([hidden]) {
+    animation: fadeIn var(--motion-base) var(--ease-standard);
+}
+
+.modal-panel,
+.search-results,
+.inbox-panel,
+.dropdown-menu {
+    animation: panelIn var(--motion-base) var(--ease-standard);
+    transform-origin: top center;
+}
+
+.toast {
+    animation: toastIn var(--motion-base) var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+    }
+
+    main.page-enter,
+    main.page-exit {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
 }

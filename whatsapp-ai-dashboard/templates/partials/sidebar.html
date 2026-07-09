@@ -70,7 +70,7 @@
 
             <ul>
 
-                <li>
+                {% if can_access('page_dashboard') %}<li>
 
                     <a href="{{ url_for('dashboard') }}"
                        class="{% if active_page == 'dashboard' %}active{% endif %}">
@@ -81,9 +81,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_conversations') %}<li>
 
                     <a href="{{ url_for('conversations') }}"
                        class="{% if active_page == 'conversations' %}active{% endif %}">
@@ -94,9 +94,22 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_whatsapp_test_client') %}<li>
+
+                    <a href="{{ url_for('whatsapp_test_client') }}"
+                       class="{% if active_page == 'whatsapp_test_client' %}active{% endif %}">
+
+                        <i class="fa-brands fa-whatsapp"></i>
+
+                        <span>Test Client</span>
+
+                    </a>
+
+                </li>{% endif %}
+
+                {% if can_access('page_analytics') %}<li>
 
                     <a href="{{ url_for('analytics') }}"
                        class="{% if active_page == 'analytics' %}active{% endif %}">
@@ -107,7 +120,7 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
             </ul>
 
@@ -125,7 +138,7 @@
 
             <ul>
 
-                <li>
+                {% if can_access('page_ai_assistant') %}<li>
 
                     <a href="{{ url_for('ai_assistant') }}"
                        class="{% if active_page == 'ai_assistant' %}active{% endif %}">
@@ -136,9 +149,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_knowledge_base') %}<li>
 
                     <a href="{{ url_for('knowledge_base') }}"
                        class="{% if active_page == 'knowledge_base' %}active{% endif %}">
@@ -149,9 +162,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_prompt_builder') %}<li>
 
                     <a href="{{ url_for('prompt_builder') }}"
                        class="{% if active_page == 'prompt_builder' %}active{% endif %}">
@@ -162,9 +175,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_workflows') %}<li>
 
                     <a href="{{ url_for('workflows') }}"
                        class="{% if active_page == 'workflows' %}active{% endif %}">
@@ -175,7 +188,7 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
             </ul>
 
@@ -193,7 +206,7 @@
 
             <ul>
 
-                <li>
+                {% if can_access('page_customers') %}<li>
 
                     <a href="{{ url_for('customers') }}"
                        class="{% if active_page == 'customers' %}active{% endif %}">
@@ -204,9 +217,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_team_members') %}<li>
 
                     <a href="{{ url_for('team_members') }}"
                        class="{% if active_page == 'team_members' %}active{% endif %}">
@@ -217,9 +230,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_billing') %}<li>
 
                     <a href="{{ url_for('billing') }}"
                        class="{% if active_page == 'billing' %}active{% endif %}">
@@ -230,9 +243,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_add_ons') %}<li>
 
                     <a href="{{ url_for('add_ons') }}"
                        class="{% if active_page == 'add_ons' %}active{% endif %}">
@@ -243,7 +256,7 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
             </ul>
 
@@ -261,7 +274,7 @@
 
             <ul>
 
-                <li>
+                {% if can_access('page_settings') %}<li>
 
                     <a href="{{ url_for('settings') }}"
                        class="{% if active_page == 'settings' %}active{% endif %}">
@@ -272,9 +285,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_security') %}<li>
 
                     <a href="{{ url_for('security') }}"
                        class="{% if active_page == 'security' %}active{% endif %}">
@@ -285,9 +298,9 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
-                <li>
+                {% if can_access('page_support') %}<li>
 
                     <a href="{{ url_for('support') }}"
                        class="{% if active_page == 'support' %}active{% endif %}">
@@ -298,7 +311,7 @@
 
                     </a>
 
-                </li>
+                </li>{% endif %}
 
             </ul>
 

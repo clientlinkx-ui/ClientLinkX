@@ -1,4 +1,8 @@
-<div class="conversation-item">
+{% if can_access('page_conversations') %}
+<a class="conversation-item" href="{{ conversation_url or url_for('conversations') }}" data-help="{{ customer_name }} is a recent WhatsApp conversation. The handler shows whether AI or a human currently owns it, status shows the workflow state, and unread count indicates messages needing attention.">
+{% else %}
+<div class="conversation-item" data-help="{{ customer_name }} is a recent WhatsApp conversation. The handler shows whether AI or a human currently owns it, status shows the workflow state, and unread count indicates messages needing attention.">
+{% endif %}
 
     <!-- ========================================= -->
     <!-- Avatar -->
@@ -104,12 +108,16 @@
 
         {% endif %}
 
-        <button class="conversation-menu">
+        <span class="conversation-menu">
 
             <i class="fa-solid fa-ellipsis-vertical"></i>
 
-        </button>
+        </span>
 
     </div>
 
+{% if can_access('page_conversations') %}
+</a>
+{% else %}
 </div>
+{% endif %}

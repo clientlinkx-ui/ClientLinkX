@@ -6,13 +6,13 @@ Conversations
 
 {% block content %}
 <section class="work-page conversations-page">
-    <section class="summary-grid">
+    <section class="summary-grid conversation-metrics">
         {% for item in summary %}
-        <article class="summary-card {{ item.tone }}">
+        <article class="summary-card conversation-metric {{ item.tone }}" data-summary-label="{{ item.label }}">
             <span class="summary-icon"><i class="{{ item.icon }}"></i></span>
             <div>
                 <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
+                <strong data-summary-value>{{ item.value }}</strong>
             </div>
         </article>
         {% endfor %}
@@ -32,7 +32,63 @@ Conversations
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input id="conversationSearch" type="search" placeholder="Search name, phone, intent...">
             </label>
+            <select id="conversationModuleFilter" aria-label="Filter by module">
+                <option value="">All modules</option>
+                {% for module in filter_options.modules %}
+                <option value="{{ module }}">{{ module }}</option>
+                {% endfor %}
+            </select>
+            <select id="conversationAssigneeFilter" aria-label="Filter by assignee">
+                <option value="">All assignees</option>
+                {% for assignee in filter_options.assignees %}
+                <option value="{{ assignee }}">{{ assignee }}</option>
+                {% endfor %}
+            </select>
+            {% if can_access('export_data') %}
+            <button class="secondary-action" type="button" id="exportConversations"><i class="fa-solid fa-download"></i> Export</button>
+            {% endif %}
+            <button class="secondary-action" type="button" id="toggleConversationTable" aria-expanded="false" aria-controls="conversationQueuePanel"><i class="fa-solid fa-table-list"></i> Table view</button>
             <button class="primary-action" type="button" id="newConversationThread"><i class="fa-solid fa-plus"></i> New Thread</button>
+        </div>
+    </section>
+
+    <section class="panel conversation-queue-panel" id="conversationQueuePanel" hidden>
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Operations</span>
+                <h2>Conversation Queue</h2>
+            </div>
+        </div>
+
+        <div class="data-table-wrap conversation-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Intent</th>
+                        <th>Module</th>
+                        <th>Status</th>
+                        <th>Messages</th>
+                        <th>SLA</th>
+                    </tr>
+                </thead>
+                <tbody id="conversationQueueBody">
+                    {% for thread in threads %}
+                    <tr data-thread-id="{{ thread.id }}">
+                        <td>
+                            <strong>{{ thread.customer_name }}</strong>
+                            <span>{{ thread.phone }}</span>
+                        </td>
+                        <td>{{ thread.intent }}</td>
+                        <td>{{ thread.module }}</td>
+                        <td><span class="conversation-status {{ thread.status|lower }}">{{ thread.status }}</span></td>
+                        <td>{{ thread.messages }}</td>
+                        <td>{{ thread.sla }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="empty-state" id="conversationQueueEmpty" {% if threads %}hidden{% endif %}>No queue rows to show.</div>
         </div>
     </section>
 
@@ -43,7 +99,7 @@ Conversations
                     <span class="eyebrow">Inbox</span>
                     <h2>Live Threads</h2>
                 </div>
-                <span class="queue-total">{{ threads|length }} shown</span>
+                <span class="queue-total" id="threadShownCount">{{ threads|length }} shown</span>
             </div>
 
             <div class="thread-list" id="threadList">
@@ -51,7 +107,8 @@ Conversations
                 <button class="thread-row {% if loop.first %}active{% endif %}" type="button"
                         data-thread-id="{{ thread.id }}"
                         data-status="{{ thread.status }}"
-                        data-search="{{ thread.customer_name }} {{ thread.phone }} {{ thread.intent }} {{ thread.module }}">
+                        data-search="{{ thread.customer_name }} {{ thread.phone }} {{ thread.intent }} {{ thread.module }}"
+                        data-assignee="{{ thread.assignee }}">
                     <span class="avatar-placeholder">{{ thread.customer_name[0] }}</span>
                     <span class="thread-main">
                         <span class="thread-top">
@@ -66,10 +123,12 @@ Conversations
                             </span>
                             <span class="conversation-status {{ thread.status|lower }}">{{ thread.status }}</span>
                             <span class="thread-priority {{ thread.priority|lower }}">{{ thread.priority }}</span>
+                            <span class="thread-assignee">{{ thread.assignee }}</span>
                         </span>
                     </span>
                 </button>
                 {% endfor %}
+                <div class="empty-state" id="threadListEmpty" {% if threads %}hidden{% endif %}>No conversations match these filters.</div>
             </div>
         </article>
 
@@ -77,112 +136,85 @@ Conversations
             <div class="panel-header">
                 <div>
                     <span class="eyebrow">Selected Thread</span>
-                    <h2 id="threadDetailName">Priya Nair</h2>
+                    <h2 id="threadDetailName">Select a thread</h2>
                 </div>
                 <div class="detail-actions">
+                    {% if account.permission_group in ['owner', 'admin', 'manager'] %}
                     <button class="icon-button" id="assignThread" type="button" title="Assign thread"><i class="fa-solid fa-user-plus"></i></button>
+                    {% endif %}
                     <button class="icon-button" id="resolveThread" type="button" title="Resolve thread"><i class="fa-solid fa-circle-check"></i></button>
                     <button class="icon-button" id="escalateThread" type="button" title="Escalate thread"><i class="fa-solid fa-arrow-up-right-dots"></i></button>
                 </div>
             </div>
 
             <div class="customer-strip">
-                <span class="avatar-placeholder" id="threadDetailAvatar">P</span>
+                <span class="avatar-placeholder" id="threadDetailAvatar">--</span>
                 <div>
-                    <strong id="threadDetailPhone">+91 98201 11842</strong>
-                    <span id="threadDetailMeta">Orders - Positive sentiment - SLA 4m</span>
+                    <strong id="threadDetailPhone">No thread selected</strong>
+                    <span id="threadDetailMeta">Select a conversation to view details.</span>
+                    <span id="threadDetailAssignee">Unassigned</span>
                 </div>
                 <span class="status-pill online" id="threadDetailHandler">AI handling</span>
             </div>
 
-            <div class="message-timeline" id="threadMessageTimeline">
-                <div class="message-bubble inbound">
-                    <span>Customer</span>
-                    <p>Can you confirm when my replacement order will arrive?</p>
-                </div>
-                <div class="message-bubble outbound">
-                    <span>AI Assistant</span>
-                    <p>Your replacement order PP-2918 is expected tomorrow between 2 PM and 6 PM.</p>
-                </div>
-                <div class="message-bubble inbound">
-                    <span>Customer</span>
-                    <p>Great. Can you share the tracking link?</p>
-                </div>
-            </div>
+            <div class="conversation-detail-body">
+                <div class="message-column">
+                    <div class="message-timeline" id="threadMessageTimeline">
+                        <div class="empty-state">Select a thread to view the message timeline.</div>
+                    </div>
 
-            <div class="reply-box">
-                <input id="threadReplyInput" type="text" value="Tracking link is ready. Send now?">
-                <button class="primary-action" id="sendThreadReply" type="button"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                    <div class="reply-box">
+                        <textarea id="threadReplyInput" rows="2" placeholder="Write a reply..." disabled></textarea>
+                        <button class="primary-action" id="sendThreadReply" type="button"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                    </div>
+                </div>
+
+                <aside class="ai-insights-panel">
+                    <div class="insight-rail-header">
+                        <div>
+                            <span class="eyebrow">AI Insights</span>
+                            <h3>Recommended Action</h3>
+                        </div>
+                        <span class="settings-badge neutral-badge" id="aiDecisionMode">Recommend</span>
+                    </div>
+
+                    <div class="insight-stack" id="aiDecisionPanel">
+                        <div class="insight-card decision-summary" id="aiDecisionCard">
+                            <div>
+                                <strong>Decision</strong>
+                                <span id="aiDecisionLabel">Select a thread to analyze routing.</span>
+                            </div>
+                            <div>
+                                <strong>Confidence</strong>
+                                <span id="aiDecisionConfidence">--</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" id="aiDecisionProgress" data-progress="0"></div></div>
+                        </div>
+                        <div class="insight-card compact-insight">
+                            <strong>Reason</strong>
+                            <span id="aiDecisionReason">AI routing has not reviewed this thread yet.</span>
+                        </div>
+                        <div class="insight-card compact-insight">
+                            <strong>Suggested action</strong>
+                            <span id="aiDecisionAction">Run analysis to get the next best action.</span>
+                        </div>
+                        <div class="insight-card compact-insight">
+                            <strong>Risk flags</strong>
+                            <span class="risk-flag-list" id="aiDecisionFlags">None yet</span>
+                        </div>
+                        <div class="insight-card compact-insight">
+                            <strong>Model</strong>
+                            <span id="aiDecisionModel">Not analyzed</span>
+                        </div>
+                        <div class="ai-decision-actions">
+                            <button class="secondary-action" id="analyzeThread" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> Analyze</button>
+                            <button class="secondary-action" id="continueThread" type="button"><i class="fa-solid fa-comments"></i> Continue Chat</button>
+                            <button class="primary-action" id="aiEscalateThread" type="button"><i class="fa-solid fa-arrow-up-right-dots"></i> Escalate</button>
+                        </div>
+                    </div>
+                </aside>
             </div>
         </article>
-
-        <aside class="panel ai-insights-panel">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">AI Insights</span>
-                    <h2>Recommended Action</h2>
-                </div>
-            </div>
-
-            <div class="insight-stack">
-                <div class="insight-card">
-                    <strong>Intent</strong>
-                    <span>Order status follow-up</span>
-                </div>
-                <div class="insight-card">
-                    <strong>Confidence</strong>
-                    <span>96%</span>
-                    <div class="progress-bar"><div class="progress-fill" data-progress="96"></div></div>
-                </div>
-                <div class="insight-card">
-                    <strong>Suggested workflow</strong>
-                    <span>Send tracking link, then mark as resolved if customer confirms.</span>
-                </div>
-                <div class="insight-card warning-card">
-                    <strong>Escalation guardrail</strong>
-                    <span>Escalate if shipment is delayed again or sentiment turns negative.</span>
-                </div>
-            </div>
-        </aside>
-    </section>
-
-    <section class="panel">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Operations</span>
-                <h2>Conversation Queue</h2>
-            </div>
-        </div>
-
-        <div class="data-table-wrap">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Customer</th>
-                        <th>Intent</th>
-                        <th>Module</th>
-                        <th>Status</th>
-                        <th>Messages</th>
-                        <th>SLA</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for thread in threads %}
-                    <tr>
-                        <td>
-                            <strong>{{ thread.customer_name }}</strong>
-                            <span>{{ thread.phone }}</span>
-                        </td>
-                        <td>{{ thread.intent }}</td>
-                        <td>{{ thread.module }}</td>
-                        <td><span class="conversation-status {{ thread.status|lower }}">{{ thread.status }}</span></td>
-                        <td>{{ thread.messages }}</td>
-                        <td>{{ thread.sla }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
     </section>
 </section>
 {% endblock %}

@@ -8,7 +8,7 @@
           content="width=device-width, initial-scale=1.0">
 
     <title>
-        {% block title %}WhatsApp AI Dashboard{% endblock %}
+        {% block title %}PingPilot Dashboard{% endblock %}
     </title>
 
     <!-- CSS -->
@@ -65,7 +65,7 @@
 
         {% include 'partials/navbar.html' %}
 
-        <main>
+        <main id="pageMain" tabindex="-1">
 
             {% block content %}
             {% endblock %}
@@ -84,6 +84,7 @@
 <script defer src="{{ url_for('static', filename='js/conversations.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/ai_assistant.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/operations.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/test_client.js') }}"></script>
 
 </body>
 

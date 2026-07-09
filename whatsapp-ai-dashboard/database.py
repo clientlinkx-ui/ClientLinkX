@@ -1,5 +1,7 @@
+import json
 import sqlite3
 from pathlib import Path
+from datetime import datetime
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -27,10 +29,10 @@ def init_db():
     with get_connection() as connection:
         connection.execute("PRAGMA foreign_keys = ON")
         create_schema(connection)
-        run_migrations(connection)
         seeded = connection.execute("SELECT COUNT(*) FROM tenants").fetchone()[0]
         if seeded == 0:
             seed_database(connection)
+        run_migrations(connection)
 
 
 def create_schema(connection):
@@ -41,22 +43,32 @@ def create_schema(connection):
             name TEXT NOT NULL,
             industry TEXT NOT NULL,
             timezone TEXT NOT NULL,
-            language TEXT NOT NULL
+            language TEXT NOT NULL,
+            owner_user_id INTEGER,
+            subscription_plan TEXT NOT NULL DEFAULT 'growth',
+            billing_cycle TEXT NOT NULL DEFAULT 'monthly',
+            company_email TEXT NOT NULL DEFAULT '',
+            company_phone TEXT NOT NULL DEFAULT '',
+            onboarding_status TEXT NOT NULL DEFAULT 'complete'
         );
 
         CREATE TABLE IF NOT EXISTS dashboard_users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id INTEGER,
             google_sub TEXT NOT NULL UNIQUE,
             email TEXT NOT NULL UNIQUE,
             name TEXT NOT NULL,
             picture TEXT,
             hosted_domain TEXT,
+            permission_group TEXT NOT NULL DEFAULT 'admin',
+            onboarding_complete INTEGER NOT NULL DEFAULT 0,
             console_theme TEXT NOT NULL DEFAULT 'auto',
             console_density TEXT NOT NULL DEFAULT 'comfortable',
             accent_color TEXT NOT NULL DEFAULT 'teal',
             default_sidebar TEXT NOT NULL DEFAULT 'expanded',
             last_login_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS pages (
@@ -174,6 +186,24 @@ def create_schema(connection):
             messages INTEGER NOT NULL,
             sla TEXT NOT NULL,
             sort_order INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS ai_escalation_decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thread_id INTEGER NOT NULL,
+            tenant_id INTEGER NOT NULL,
+            decision TEXT NOT NULL,
+            confidence INTEGER NOT NULL,
+            reason TEXT NOT NULL,
+            suggested_action TEXT NOT NULL,
+            risk_flags TEXT NOT NULL DEFAULT '[]',
+            model TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(thread_id, tenant_id),
+            FOREIGN KEY (thread_id) REFERENCES conversation_threads(id) ON DELETE CASCADE,
             FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
         );
 
@@ -342,6 +372,8 @@ def create_schema(connection):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tenant_id INTEGER NOT NULL,
             name TEXT NOT NULL,
+            email TEXT NOT NULL DEFAULT '',
+            permission_group TEXT NOT NULL DEFAULT 'agent',
             role TEXT NOT NULL,
             team TEXT NOT NULL,
             status TEXT NOT NULL,
@@ -355,10 +387,16 @@ def create_schema(connection):
         CREATE TABLE IF NOT EXISTS team_roles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tenant_id INTEGER NOT NULL,
+            role_key TEXT NOT NULL DEFAULT '',
             name TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            role_type TEXT NOT NULL DEFAULT 'custom',
+            locked INTEGER NOT NULL DEFAULT 0,
             count INTEGER NOT NULL,
             scope TEXT NOT NULL,
+            permissions TEXT NOT NULL DEFAULT '',
             sort_order INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(tenant_id, role_key),
             FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
         );
 
@@ -708,6 +746,17 @@ def run_migrations(connection):
         if name not in workflow_columns:
             connection.execute(f"ALTER TABLE workflows ADD COLUMN {name} {definition}")
 
+    thread_columns = {row["name"] for row in connection.execute("PRAGMA table_info(conversation_threads)").fetchall()}
+    for name, definition in {
+        "assigned_team": "TEXT NOT NULL DEFAULT ''",
+        "assigned_user_id": "INTEGER",
+        "assigned_user_name": "TEXT NOT NULL DEFAULT ''",
+        "assigned_at": "TEXT NOT NULL DEFAULT ''",
+        "resolved_at": "TEXT NOT NULL DEFAULT ''",
+    }.items():
+        if thread_columns and name not in thread_columns:
+            connection.execute(f"ALTER TABLE conversation_threads ADD COLUMN {name} {definition}")
+
     connection.executescript(
         """
         CREATE TABLE IF NOT EXISTS ai_runtime_settings (
@@ -760,6 +809,7 @@ def run_migrations(connection):
             intent_detection INTEGER NOT NULL DEFAULT 1,
             handoff_low_confidence INTEGER NOT NULL DEFAULT 1,
             handoff_negative_sentiment INTEGER NOT NULL DEFAULT 1,
+            escalation_decision_mode TEXT NOT NULL DEFAULT 'recommend',
             require_2fa INTEGER NOT NULL DEFAULT 1,
             mask_phone_numbers INTEGER NOT NULL DEFAULT 1,
             retention_period TEXT NOT NULL DEFAULT '180 days',
@@ -789,8 +839,124 @@ def run_migrations(connection):
             FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
             FOREIGN KEY (addon_module_id) REFERENCES addon_modules(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS ai_escalation_decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thread_id INTEGER NOT NULL,
+            tenant_id INTEGER NOT NULL,
+            decision TEXT NOT NULL,
+            confidence INTEGER NOT NULL,
+            reason TEXT NOT NULL,
+            suggested_action TEXT NOT NULL,
+            risk_flags TEXT NOT NULL DEFAULT '[]',
+            model TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(thread_id, tenant_id),
+            FOREIGN KEY (thread_id) REFERENCES conversation_threads(id) ON DELETE CASCADE,
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS subscription_plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plan_key TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            monthly_price TEXT NOT NULL,
+            yearly_price TEXT NOT NULL,
+            conversation_limit TEXT NOT NULL,
+            ai_message_limit TEXT NOT NULL,
+            seat_limit TEXT NOT NULL,
+            support_level TEXT NOT NULL,
+            features TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS onboarding_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            company_name TEXT NOT NULL DEFAULT '',
+            industry TEXT NOT NULL DEFAULT '',
+            timezone TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+            language TEXT NOT NULL DEFAULT 'English',
+            company_email TEXT NOT NULL DEFAULT '',
+            company_phone TEXT NOT NULL DEFAULT '',
+            selected_plan TEXT NOT NULL DEFAULT 'growth',
+            billing_cycle TEXT NOT NULL DEFAULT 'monthly',
+            email_verified INTEGER NOT NULL DEFAULT 0,
+            whatsapp_verified INTEGER NOT NULL DEFAULT 0,
+            current_step TEXT NOT NULL DEFAULT 'account',
+            completed_at TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES dashboard_users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS verification_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            channel TEXT NOT NULL,
+            destination TEXT NOT NULL,
+            code_hash TEXT NOT NULL,
+            purpose TEXT NOT NULL DEFAULT 'onboarding',
+            attempts INTEGER NOT NULL DEFAULT 0,
+            verified_at TEXT,
+            expires_at TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES dashboard_users(id) ON DELETE CASCADE
+        );
         """
     )
+    tenant_columns = {row["name"] for row in connection.execute("PRAGMA table_info(tenants)").fetchall()}
+    for name, definition in {
+        "owner_user_id": "INTEGER",
+        "subscription_plan": "TEXT NOT NULL DEFAULT 'growth'",
+        "billing_cycle": "TEXT NOT NULL DEFAULT 'monthly'",
+        "company_email": "TEXT NOT NULL DEFAULT ''",
+        "company_phone": "TEXT NOT NULL DEFAULT ''",
+        "onboarding_status": "TEXT NOT NULL DEFAULT 'complete'",
+    }.items():
+        if tenant_columns and name not in tenant_columns:
+            connection.execute(f"ALTER TABLE tenants ADD COLUMN {name} {definition}")
+    dashboard_user_columns = {row["name"] for row in connection.execute("PRAGMA table_info(dashboard_users)").fetchall()}
+    if dashboard_user_columns and "tenant_id" not in dashboard_user_columns:
+        connection.execute("ALTER TABLE dashboard_users ADD COLUMN tenant_id INTEGER")
+    if dashboard_user_columns and "permission_group" not in dashboard_user_columns:
+        connection.execute("ALTER TABLE dashboard_users ADD COLUMN permission_group TEXT NOT NULL DEFAULT 'admin'")
+    if dashboard_user_columns and "onboarding_complete" not in dashboard_user_columns:
+        connection.execute("ALTER TABLE dashboard_users ADD COLUMN onboarding_complete INTEGER NOT NULL DEFAULT 0")
+    connection.execute(
+        """UPDATE dashboard_users
+        SET tenant_id = COALESCE(tenant_id, 1),
+            onboarding_complete = 1
+        WHERE EXISTS (SELECT 1 FROM tenants WHERE tenants.id = 1)
+          AND (tenant_id IS NULL OR onboarding_complete = 0)
+          AND (
+            permission_group = 'owner'
+            OR tenant_id IS NOT NULL
+            OR id = (SELECT id FROM dashboard_users ORDER BY created_at, id LIMIT 1)
+          )"""
+    )
+    team_member_columns = {row["name"] for row in connection.execute("PRAGMA table_info(team_members)").fetchall()}
+    if team_member_columns and "email" not in team_member_columns:
+        connection.execute("ALTER TABLE team_members ADD COLUMN email TEXT NOT NULL DEFAULT ''")
+    if team_member_columns and "permission_group" not in team_member_columns:
+        connection.execute("ALTER TABLE team_members ADD COLUMN permission_group TEXT NOT NULL DEFAULT 'agent'")
+    connection.execute(
+        """UPDATE dashboard_users
+        SET permission_group = 'owner'
+        WHERE id = (SELECT id FROM dashboard_users ORDER BY created_at, id LIMIT 1)
+        AND onboarding_complete = 1
+        AND NOT EXISTS (SELECT 1 FROM dashboard_users WHERE permission_group = 'owner')"""
+    )
+    connection.execute(
+        """UPDATE tenants
+        SET owner_user_id = COALESCE(owner_user_id, (SELECT id FROM dashboard_users WHERE permission_group = 'owner' ORDER BY created_at, id LIMIT 1)),
+            onboarding_status = COALESCE(NULLIF(onboarding_status, ''), 'complete')
+        WHERE id = 1"""
+    )
+    connection.execute("UPDATE dashboard_users SET permission_group = 'admin' WHERE permission_group IS NULL OR permission_group = ''")
+    connection.execute("UPDATE team_members SET permission_group = 'agent' WHERE permission_group IS NULL OR permission_group = ''")
     support_columns = {row["name"] for row in connection.execute("PRAGMA table_info(support_tickets)").fetchall()}
     for name, definition in {
         "request_type": "TEXT NOT NULL DEFAULT 'Technical support'",
@@ -803,11 +969,37 @@ def run_migrations(connection):
     team_role_columns = {row["name"] for row in connection.execute("PRAGMA table_info(team_roles)").fetchall()}
     if team_role_columns and "permissions" not in team_role_columns:
         connection.execute("ALTER TABLE team_roles ADD COLUMN permissions TEXT NOT NULL DEFAULT ''")
+    for name, definition in {
+        "role_key": "TEXT NOT NULL DEFAULT ''",
+        "description": "TEXT NOT NULL DEFAULT ''",
+        "role_type": "TEXT NOT NULL DEFAULT 'custom'",
+        "locked": "INTEGER NOT NULL DEFAULT 0",
+    }.items():
+        if team_role_columns and name not in team_role_columns:
+            connection.execute(f"ALTER TABLE team_roles ADD COLUMN {name} {definition}")
+    role_rows = connection.execute("SELECT id, name, role_key, permissions, scope FROM team_roles WHERE tenant_id = 1").fetchall()
+    used_role_keys = set()
+    for row in role_rows:
+        role_key = row["role_key"] or normalize_role_key(row["name"]) or f"role_{row['id']}"
+        if role_key in used_role_keys:
+            role_key = f"{role_key}_{row['id']}"
+        used_role_keys.add(role_key)
+        permissions = normalize_permissions(row["permissions"])
+        connection.execute(
+            """UPDATE team_roles
+            SET role_key = ?, description = COALESCE(NULLIF(description, ''), scope), permissions = ?
+            WHERE id = ?""",
+            (role_key, json.dumps(permissions), row["id"]),
+        )
+    seed_system_roles(connection)
     connection.execute("INSERT OR IGNORE INTO workspace_settings (tenant_id) VALUES (1)")
     workspace_columns = {row["name"] for row in connection.execute("PRAGMA table_info(workspace_settings)").fetchall()}
     for name in ["kb_grounding", "intent_detection", "handoff_low_confidence", "handoff_negative_sentiment"]:
         if workspace_columns and name not in workspace_columns:
             connection.execute(f"ALTER TABLE workspace_settings ADD COLUMN {name} INTEGER NOT NULL DEFAULT 1")
+    if workspace_columns and "escalation_decision_mode" not in workspace_columns:
+        connection.execute("ALTER TABLE workspace_settings ADD COLUMN escalation_decision_mode TEXT NOT NULL DEFAULT 'recommend'")
+    seed_subscription_plans(connection)
     connection.execute(
         """INSERT OR IGNORE INTO ai_runtime_settings
         (tenant_id, primary_model, fallback_model, confidence_threshold, temperature, system_prompt)
@@ -1198,10 +1390,10 @@ def seed_shared_domain_rows(connection, tenant_id):
         {"tenant_id": tenant_id, "name": "Nisha Patel", "role": "Billing Specialist", "team": "Finance", "status": "Offline", "assigned": 4, "resolved": 39, "csat": "90%"},
     ])
     insert_rows(connection, "team_roles", [
-        {"tenant_id": tenant_id, "name": "Owner", "count": 2, "scope": "Full workspace control"},
-        {"tenant_id": tenant_id, "name": "Admin", "count": 10, "scope": "Settings, analytics, team management"},
-        {"tenant_id": tenant_id, "name": "Team Lead", "count": 18, "scope": "Queues, assignments, escalations"},
-        {"tenant_id": tenant_id, "name": "Agent", "count": 46, "scope": "Assigned conversations and notes"},
+        {"tenant_id": tenant_id, "role_key": "owner", "name": "Owner", "count": 2, "scope": "Full workspace control"},
+        {"tenant_id": tenant_id, "role_key": "admin", "name": "Admin", "count": 10, "scope": "Settings, analytics, team management"},
+        {"tenant_id": tenant_id, "role_key": "manager", "name": "Team Lead", "count": 18, "scope": "Queues, assignments, escalations"},
+        {"tenant_id": tenant_id, "role_key": "agent", "name": "Agent", "count": 46, "scope": "Assigned conversations and notes"},
     ])
     seed_billing_ai_knowledge_prompt_workflow_settings(connection, tenant_id)
 
@@ -1420,23 +1612,499 @@ def with_page(slug, payload):
     return {**page, **payload}
 
 
+def dashboard_updated_at():
+    return datetime.now().strftime("%Y-%m-%d %H:%M")
+
+
+def format_metric(value):
+    try:
+        return f"{int(value):,}"
+    except (TypeError, ValueError):
+        return str(value or "0")
+
+
+def clamp_percent(value):
+    return max(0, min(100, int(round(value or 0))))
+
+
+def parse_percent(value):
+    if value is None:
+        return None
+    try:
+        return float(str(value).replace("%", "").strip())
+    except ValueError:
+        return None
+
+
+def dashboard_thread_counts(tenant_id=1):
+    return fetch_one(
+        """
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN handler = 'AI' THEN 1 ELSE 0 END) AS ai_handled,
+            SUM(CASE WHEN handler = 'Human' OR status = 'Escalated' THEN 1 ELSE 0 END) AS escalated,
+            SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved,
+            SUM(CASE WHEN status = 'Waiting' THEN 1 ELSE 0 END) AS waiting,
+            SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) AS active,
+            SUM(CASE WHEN sentiment = 'Negative' THEN 1 ELSE 0 END) AS negative
+        FROM conversation_threads
+        WHERE tenant_id = ?
+        """,
+        (tenant_id,),
+    ) or {}
+
+
+def get_dashboard_summary(tenant_id=1):
+    counts = dashboard_thread_counts(tenant_id)
+    total = counts.get("total") or 0
+    if not total:
+        return page_ordered("dashboard_stats", "dashboard", "title, value, change, trend, icon")
+
+    csat_rows = fetch_all("SELECT csat FROM customers WHERE tenant_id = ?", (tenant_id,))
+    csat_values = [value for value in (parse_percent(row.get("csat")) for row in csat_rows) if value is not None]
+    csat = sum(csat_values) / len(csat_values) if csat_values else 92.0
+    automation = ((counts.get("ai_handled") or 0) / total) * 100
+    escalation_rate = ((counts.get("escalated") or 0) / total) * 100
+
+    return [
+        {
+            "title": "Total Conversations",
+            "value": format_metric(total),
+            "raw_value": total,
+            "change": f"{format_metric(counts.get('active') or 0)} active",
+            "trend": "up" if counts.get("active") else "neutral",
+            "icon": "fa-solid fa-comments",
+            "url": "/conversations",
+            "help": "Total live WhatsApp threads currently stored in PingPilot. Open it to drill into every conversation timeline and routing state.",
+        },
+        {
+            "title": "Escalations",
+            "value": format_metric(counts.get("escalated") or 0),
+            "raw_value": counts.get("escalated") or 0,
+            "change": f"{escalation_rate:.1f}% of volume",
+            "trend": "down" if escalation_rate < 20 else "up",
+            "icon": "fa-solid fa-headset",
+            "url": "/conversations?status=Escalated",
+            "help": "Threads currently owned by humans or marked escalated. Use this to inspect where AI routing has handed work to your team.",
+        },
+        {
+            "title": "Customer Satisfaction",
+            "value": f"{csat:.1f}%",
+            "raw_value": csat,
+            "change": f"{format_metric(counts.get('resolved') or 0)} resolved",
+            "trend": "up" if csat >= 90 else "down",
+            "icon": "fa-solid fa-face-smile",
+            "url": "/analytics?metric=csat",
+            "help": "Average customer satisfaction from stored customer records, paired with current resolution volume.",
+        },
+        {
+            "title": "Automation Rate",
+            "value": f"{automation:.1f}%",
+            "raw_value": automation,
+            "change": f"{format_metric(counts.get('ai_handled') or 0)} AI handled",
+            "trend": "up" if automation >= 70 else "down",
+            "icon": "fa-solid fa-bolt",
+            "url": "/analytics?metric=automation",
+            "help": "Share of stored conversations currently handled by AI rather than a human queue.",
+        },
+    ]
+
+
+def get_dashboard_recent_conversations(tenant_id=1, limit=4):
+    rows = fetch_all(
+        """
+        SELECT id, customer_name, time, last_message, handler, status, messages
+        FROM conversation_threads
+        WHERE tenant_id = ?
+        ORDER BY sort_order, id
+        LIMIT ?
+        """,
+        (tenant_id, limit),
+    )
+    if not rows:
+        return ordered("dashboard_conversations", tenant_id=tenant_id, columns="customer_name, avatar, time, last_message, handler, status, unread")
+    conversations = []
+    for row in rows:
+        status = row.get("status") or "Active"
+        conversations.append({
+            "id": row.get("id"),
+            "customer_name": row.get("customer_name"),
+            "avatar": None,
+            "time": row.get("time") or "Recently",
+            "last_message": row.get("last_message"),
+            "handler": row.get("handler") or "AI",
+            "status": status,
+            "unread": 0 if status == "Resolved" else min(row.get("messages") or 0, 9),
+            "url": f"/conversations?thread={row.get('id')}",
+        })
+    return conversations
+
+
+def dashboard_module_icon(module_name):
+    icons = {
+        "sales": "fa-solid fa-chart-line",
+        "admissions": "fa-solid fa-graduation-cap",
+        "appointments": "fa-solid fa-calendar-check",
+        "orders": "fa-solid fa-box",
+        "support": "fa-solid fa-life-ring",
+        "billing": "fa-solid fa-credit-card",
+    }
+    return icons.get((module_name or "").lower(), "fa-solid fa-layer-group")
+
+
+def get_dashboard_modules(tenant_id=1):
+    rows = fetch_all(
+        """
+        SELECT
+            module AS name,
+            COUNT(*) AS total,
+            SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved
+        FROM conversation_threads
+        WHERE tenant_id = ?
+        GROUP BY module
+        ORDER BY total DESC, module
+        LIMIT 6
+        """,
+        (tenant_id,),
+    )
+    if not rows:
+        return ordered("business_modules", tenant_id=tenant_id, columns="name, value, label, progress, icon")
+    return [
+        {
+            "name": row["name"],
+            "value": format_metric(row["total"]),
+            "raw_value": row["total"],
+            "label": "threads handled",
+            "progress": clamp_percent(((row["resolved"] or 0) / row["total"]) * 100 if row["total"] else 0),
+            "icon": dashboard_module_icon(row["name"]),
+            "url": f"/analytics?module={row['name']}",
+        }
+        for row in rows
+    ]
+
+
+def get_dashboard_handoffs(tenant_id=1):
+    rows = fetch_all(
+        """
+        SELECT module AS team, COUNT(*) AS count
+        FROM conversation_threads
+        WHERE tenant_id = ?
+          AND (handler = 'Human' OR status = 'Escalated')
+          AND status != 'Resolved'
+        GROUP BY module
+        ORDER BY count DESC, module
+        LIMIT 5
+        """,
+        (tenant_id,),
+    )
+    if not rows:
+        return ordered("escalations", tenant_id=tenant_id, columns="team, count, sla, tone")
+    return [
+        {
+            "team": f"{row['team']} Team",
+            "count": row["count"],
+            "sla": "Live queue",
+            "tone": "warning" if row["count"] >= 3 else "good",
+            "url": f"/conversations?status=Escalated&module={row['team']}",
+        }
+        for row in rows
+    ]
+
+
+def get_dashboard_status_breakdown(tenant_id=1):
+    rows = fetch_all(
+        """
+        SELECT status, COUNT(*) AS count
+        FROM conversation_threads
+        WHERE tenant_id = ?
+        GROUP BY status
+        ORDER BY count DESC
+        """,
+        (tenant_id,),
+    )
+    if not rows:
+        return {
+            "labels": ["Resolved by AI", "Waiting", "Escalated", "Abandoned"],
+            "values": [68, 14, 12, 6],
+        }
+    labels = [row["status"] for row in rows]
+    values = [row["count"] for row in rows]
+    return {"labels": labels, "values": values}
+
+
+def get_dashboard_traffic(range_key="7d", tenant_id=1):
+    range_key = range_key if range_key in {"7d", "30d", "90d"} else "7d"
+    counts = dashboard_thread_counts(tenant_id)
+    total = counts.get("total") or 0
+    ai_total = counts.get("ai_handled") or 0
+    human_total = counts.get("escalated") or 0
+    fallback = {
+        "7d": {"labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "ai": [1840, 2140, 2380, 2210, 2690, 2860, 3120], "human": [210, 248, 224, 276, 240, 196, 178]},
+        "30d": {"labels": ["W1", "W2", "W3", "W4", "Now"], "ai": [8420, 9210, 10480, 11340, 12620], "human": [940, 880, 802, 724, 690]},
+        "90d": {"labels": ["Apr", "May", "Jun", "Jul"], "ai": [28400, 34600, 41200, 46300], "human": [3820, 3440, 2960, 2510]},
+    }
+    if not total:
+        return fallback[range_key]
+
+    labels = fallback[range_key]["labels"]
+    weight_sets = {
+        "7d": [0.78, 0.86, 0.93, 0.88, 1.0, 1.07, 1.16],
+        "30d": [0.72, 0.86, 0.98, 1.08, 1.18],
+        "90d": [0.68, 0.86, 1.0, 1.14],
+    }
+    weights = weight_sets[range_key]
+    scale = max(total, len(weights) * 3)
+    ai_base = max(1, round((ai_total or total) / len(weights)))
+    human_base = max(1 if human_total else 0, round(human_total / len(weights)))
+    return {
+        "labels": labels,
+        "ai": [max(0, round(ai_base * weight * scale / max(total, 1))) for weight in weights],
+        "human": [max(0, round(human_base * weight * scale / max(total, 1))) for weight in weights],
+    }
+
+
+def get_dashboard_recent_activity(tenant_id=1, limit=5):
+    audit_rows = fetch_all(
+        """
+        SELECT event, user, time, status
+        FROM audit_logs
+        WHERE tenant_id = ?
+        ORDER BY sort_order, id
+        LIMIT ?
+        """,
+        (tenant_id, limit),
+    )
+    if audit_rows:
+        return [
+            {
+                "title": row["event"],
+                "description": f"Workspace event recorded for {row['user']}.",
+                "activity_type": "Audit",
+                "icon": "fa-solid fa-shield-halved",
+                "time": row["time"],
+                "user": row["user"],
+                "status": row["status"],
+            }
+            for row in audit_rows
+        ]
+    return ordered("dashboard_activities", tenant_id=tenant_id, columns="title, description, activity_type, icon, time, user, status")
+
+
+def get_dashboard_performance(tenant_id=1):
+    counts = dashboard_thread_counts(tenant_id)
+    total = counts.get("total") or 0
+    if not total:
+        return page_ordered("performance_metrics", "dashboard", "title, subtitle, icon, value, unit, progress, status, change")
+    resolution = ((counts.get("resolved") or 0) / total) * 100
+    fallback = ((counts.get("negative") or 0) / total) * 100
+    ai_decisions = fetch_one("SELECT AVG(confidence) AS confidence FROM ai_escalation_decisions WHERE tenant_id = ?", (tenant_id,)) or {}
+    confidence = ai_decisions.get("confidence") or 88
+    return [
+        {
+            "title": "Routing Confidence",
+            "subtitle": "Average AI escalation confidence",
+            "icon": "fa-solid fa-route",
+            "value": f"{confidence:.1f}",
+            "unit": "%",
+            "progress": clamp_percent(confidence),
+            "status": "excellent" if confidence >= 90 else "good",
+            "change": "Live from AI decisions",
+        },
+        {
+            "title": "Resolution Rate",
+            "subtitle": "Threads marked resolved",
+            "icon": "fa-solid fa-circle-check",
+            "value": f"{resolution:.1f}",
+            "unit": "%",
+            "progress": clamp_percent(resolution),
+            "status": "good" if resolution >= 50 else "warning",
+            "change": f"{format_metric(counts.get('resolved') or 0)} resolved",
+        },
+        {
+            "title": "Fallback Risk",
+            "subtitle": "Negative sentiment share",
+            "icon": "fa-solid fa-triangle-exclamation",
+            "value": f"{fallback:.1f}",
+            "unit": "%",
+            "progress": clamp_percent(100 - fallback),
+            "status": "warning" if fallback >= 20 else "good",
+            "change": f"{format_metric(counts.get('negative') or 0)} flagged threads",
+        },
+    ]
+
+
+def get_dashboard_runtime_status(tenant_id=1):
+    runtime = get_ai_runtime()
+    connection = fetch_one(
+        """
+        SELECT provider_label, model, updated_at
+        FROM assistant_connections
+        ORDER BY updated_at DESC, id DESC
+        LIMIT 1
+        """
+    )
+    kb_count = fetch_one("SELECT COUNT(*) AS count FROM kb_entries WHERE tenant_id = ?", (tenant_id,)) or {}
+    handoffs = get_dashboard_handoffs(tenant_id)
+    configured = bool(connection)
+    return {
+        "provider": connection["provider_label"] if connection else "No provider configured",
+        "model": connection["model"] if connection else runtime["primary_model"],
+        "description": "Active provider and model used by simulator, prompts, and routing decisions." if configured else "Connect Ollama or OpenRouter before relying on live AI responses.",
+        "configured": configured,
+        "status_label": "Online" if configured else "Setup needed",
+        "status_tone": "online" if configured else "warning",
+        "confidence": runtime.get("confidence_threshold", 82),
+        "latency": "Live",
+        "deployment_version": runtime.get("deployment_version", 1),
+        "whatsapp_status": "Test harness",
+        "kb_status": f"{kb_count.get('count') or 0} entries",
+        "handoff_status": f"{sum(item.get('count') or 0 for item in handoffs)} open",
+    }
+
+
 def get_dashboard_data():
+    tenant = fetch_one("SELECT name AS company_name, industry FROM tenants WHERE id = 1") or {"company_name": "PingPilot Workspace"}
+    handoffs = get_dashboard_handoffs()
     return with_page("dashboard", {
+        "workspace": tenant,
+        "updated_at": dashboard_updated_at(),
         "ai_runtime": get_ai_runtime(),
-        "stats": page_ordered("dashboard_stats", "dashboard", "title, value, change, trend, icon"),
-        "conversations": ordered("dashboard_conversations", columns="customer_name, avatar, time, last_message, handler, status, unread"),
-        "activities": ordered("dashboard_activities", columns="title, description, activity_type, icon, time, user, status"),
-        "performance": page_ordered("performance_metrics", "dashboard", "title, subtitle, icon, value, unit, progress, status, change"),
-        "modules": ordered("business_modules", columns="name, value, label, progress, icon"),
-        "escalations": ordered("escalations", columns="team, count, sla, tone"),
+        "runtime_status": get_dashboard_runtime_status(),
+        "stats": get_dashboard_summary(),
+        "conversations": get_dashboard_recent_conversations(),
+        "activities": get_dashboard_recent_activity(),
+        "performance": get_dashboard_performance(),
+        "modules": get_dashboard_modules(),
+        "escalations": handoffs,
+        "handoff_total": sum(item.get("count") or 0 for item in handoffs),
+        "traffic": get_dashboard_traffic(),
+        "status_breakdown": get_dashboard_status_breakdown(),
     })
 
 
+def conversation_select_columns():
+    return """id, customer_name, phone, intent, module, handler, status, priority, sentiment,
+        time, last_message, messages, sla, assigned_team, assigned_user_id, assigned_user_name,
+        assigned_at, resolved_at"""
+
+
+def conversation_row_decorated(row):
+    if not row:
+        return row
+    row["assignee"] = row.get("assigned_user_name") or row.get("assigned_team") or "Unassigned"
+    row["is_assigned"] = bool(row.get("assigned_user_name") or row.get("assigned_team"))
+    return row
+
+
+def conversation_filters_sql(filters, tenant_id=1, permitted_user_id=None):
+    where = ["tenant_id = ?"]
+    params = [tenant_id]
+    status = (filters.get("status") or "").strip()
+    if status and status != "All":
+        where.append("status = ?")
+        params.append(status)
+    for key in ["module", "priority", "handler", "sentiment"]:
+        value = (filters.get(key) or "").strip()
+        if value:
+            where.append(f"{key} = ?")
+            params.append(value)
+    assignee = (filters.get("assignee") or "").strip()
+    if assignee:
+        where.append("(assigned_team LIKE ? OR assigned_user_name LIKE ?)")
+        params.extend([f"%{assignee}%", f"%{assignee}%"])
+    query = (filters.get("q") or "").strip()
+    if query:
+        like = f"%{query}%"
+        where.append("(customer_name LIKE ? OR phone LIKE ? OR intent LIKE ? OR module LIKE ? OR last_message LIKE ?)")
+        params.extend([like, like, like, like, like])
+    if permitted_user_id is not None:
+        where.append("assigned_user_id = ?")
+        params.append(permitted_user_id)
+    return " AND ".join(where), params
+
+
+def get_conversation_summary_counts(tenant_id=1, permitted_user_id=None):
+    where = "tenant_id = ?"
+    params = [tenant_id]
+    if permitted_user_id is not None:
+        where += " AND assigned_user_id = ?"
+        params.append(permitted_user_id)
+    rows = fetch_all(
+        f"""SELECT status, COUNT(*) AS count
+        FROM conversation_threads
+        WHERE {where}
+        GROUP BY status""",
+        params,
+    )
+    counts = {row["status"]: row["count"] for row in rows}
+    total = sum(counts.values())
+    return {
+        "total": total,
+        "active": counts.get("Active", 0),
+        "waiting": counts.get("Waiting", 0),
+        "escalated": counts.get("Escalated", 0),
+        "resolved": counts.get("Resolved", 0),
+    }
+
+
+def get_conversation_threads(filters=None, tenant_id=1, permitted_user_id=None, limit=100):
+    filters = filters or {}
+    where, params = conversation_filters_sql(filters, tenant_id, permitted_user_id)
+    rows = fetch_all(
+        f"""SELECT {conversation_select_columns()}
+        FROM conversation_threads
+        WHERE {where}
+        ORDER BY CASE status WHEN 'Escalated' THEN 0 WHEN 'Waiting' THEN 1 WHEN 'Active' THEN 2 ELSE 3 END,
+                 sort_order, id
+        LIMIT ?""",
+        (*params, limit),
+    )
+    return [conversation_row_decorated(row) for row in rows]
+
+
+def get_conversation_filter_options(tenant_id=1):
+    def values(column):
+        return [
+            row[column]
+            for row in fetch_all(
+                f"SELECT DISTINCT {column} FROM conversation_threads WHERE tenant_id = ? AND {column} != '' ORDER BY {column}",
+                (tenant_id,),
+            )
+        ]
+
+    assignees = fetch_all(
+        """SELECT DISTINCT assigned_team AS value FROM conversation_threads
+        WHERE tenant_id = ? AND assigned_team != ''
+        UNION
+        SELECT DISTINCT assigned_user_name AS value FROM conversation_threads
+        WHERE tenant_id = ? AND assigned_user_name != ''
+        ORDER BY value""",
+        (tenant_id, tenant_id),
+    )
+    return {
+        "modules": values("module"),
+        "priorities": values("priority"),
+        "handlers": values("handler"),
+        "sentiments": values("sentiment"),
+        "assignees": [row["value"] for row in assignees],
+    }
+
+
+def get_conversation_assignees(tenant_id=1):
+    teams = ordered("teams", tenant_id=tenant_id, columns="name")
+    members = ordered("team_members", tenant_id=tenant_id, columns="id, name, email, team, status")
+    return {"teams": teams, "members": members}
+
+
 def get_conversations_data():
+    threads = get_conversation_threads()
     return with_page("conversations", {
         "summary": summary("conversations"),
-        "threads": ordered("conversation_threads", columns="id, customer_name, phone, intent, module, handler, status, priority, sentiment, time, last_message, messages, sla"),
+        "summary_counts": get_conversation_summary_counts(),
+        "threads": threads,
         "quick_filters": [item["label"] for item in page_ordered("quick_filters", "conversations", "label")],
+        "filter_options": get_conversation_filter_options(),
+        "assignees": get_conversation_assignees(),
     })
 
 
@@ -1470,6 +2138,8 @@ def get_security_data():
         "summary": summary("security"),
         "access_rules": ordered("security_access_rules", columns="id, name, detail, enabled"),
         "roles": ordered("security_roles", columns="id, role, users, permissions"),
+        "permission_groups": get_permission_groups(),
+        "dashboard_users": get_dashboard_users(),
         "audit_logs": ordered("audit_logs", columns="event, user, ip, time, status"),
         "compliance": ordered("compliance_items", columns="name, value, progress"),
         "security_settings": fetch_one("SELECT * FROM workspace_settings WHERE tenant_id = 1"),
@@ -1495,17 +2165,30 @@ def get_customers_data():
 
 
 def get_team_data():
+    members = ordered("team_members", columns="id, name, email, permission_group, role, team, status, assigned, resolved, csat")
+    for member in members:
+        member["permission_label"] = permission_group_label(member.get("permission_group"))
+        member["is_owner"] = member.get("permission_group") == "owner"
     return with_page("team-members", {
         "summary": summary("team-members"),
-        "members": ordered("team_members", columns="id, name, role, team, status, assigned, resolved, csat"),
+        "members": members,
         "teams": ordered("teams", columns="name, members, queue, sla, progress"),
         "roles": ordered("team_roles", columns="id, name, count, scope, permissions"),
+        "permission_groups": get_permission_groups(),
+        "dashboard_users": get_dashboard_users(),
     })
 
 
 def get_billing_data():
+    tenant = fetch_one(
+        """SELECT subscription_plan, billing_cycle FROM tenants WHERE id = 1"""
+    ) or {"subscription_plan": "growth", "billing_cycle": "monthly"}
+    plan = get_subscription_plan(tenant.get("subscription_plan") or "growth") or get_subscription_plan("growth")
+    plan["billing_cycle"] = tenant.get("billing_cycle") or "monthly"
+    plan["current_price"] = plan["yearly_price"] if plan["billing_cycle"] == "yearly" else plan["monthly_price"]
     return with_page("billing", {
         "summary": summary("billing"),
+        "plan": plan,
         "usage": ordered("billing_usage", columns="name, value, progress"),
         "invoices": ordered("invoices", columns="id, invoice_id, date, amount, status"),
         "add_ons": ordered("billing_addons", columns="id, name, detail, price, enabled"),
@@ -2004,6 +2687,204 @@ def mark_topbar_items_read(kind, item_id=None, tenant_id=1):
         return cursor.rowcount
 
 
+PERMISSION_CATALOG = [
+    {"key": "page_dashboard", "label": "Dashboard", "group": "Pages"},
+    {"key": "page_conversations", "label": "Conversations", "group": "Pages"},
+    {"key": "page_whatsapp_test_client", "label": "Test WhatsApp Client", "group": "Pages"},
+    {"key": "page_analytics", "label": "Analytics", "group": "Pages"},
+    {"key": "page_ai_assistant", "label": "AI Assistant", "group": "AI Management"},
+    {"key": "page_knowledge_base", "label": "Knowledge Base", "group": "AI Management"},
+    {"key": "page_prompt_builder", "label": "Prompt Builder", "group": "AI Management"},
+    {"key": "page_workflows", "label": "Workflows", "group": "AI Management"},
+    {"key": "page_customers", "label": "Customers", "group": "Business"},
+    {"key": "page_team_members", "label": "Team Members", "group": "Business"},
+    {"key": "page_billing", "label": "Billing", "group": "Business"},
+    {"key": "page_add_ons", "label": "Add-ons", "group": "Business"},
+    {"key": "page_settings", "label": "Settings", "group": "System"},
+    {"key": "page_security", "label": "Security", "group": "System"},
+    {"key": "page_support", "label": "Support", "group": "System"},
+    {"key": "manage_team_invites", "label": "Invite team members", "group": "Actions"},
+    {"key": "assign_roles", "label": "Assign roles", "group": "Actions"},
+    {"key": "manage_roles", "label": "Manage roles and permissions", "group": "Actions"},
+    {"key": "export_data", "label": "Export data", "group": "Actions"},
+    {"key": "manage_security", "label": "Manage security controls", "group": "Actions"},
+    {"key": "manage_settings", "label": "Manage workspace settings", "group": "Actions"},
+    {"key": "manage_billing", "label": "Manage billing and add-ons", "group": "Actions"},
+    {"key": "manage_ai", "label": "Manage AI runtime and prompts", "group": "Actions"},
+]
+
+
+ALL_PERMISSION_KEYS = [item["key"] for item in PERMISSION_CATALOG]
+
+
+SYSTEM_ROLES = [
+    {
+        "role_key": "owner",
+        "name": "Owner",
+        "description": "Full workspace access. Protected and cannot be changed.",
+        "scope": "Full protected workspace access",
+        "permissions": ALL_PERMISSION_KEYS,
+        "role_type": "system",
+        "locked": 1,
+        "sort_order": 1,
+    },
+    {
+        "role_key": "admin",
+        "name": "Admin",
+        "description": "Full administrative access except owner protection changes.",
+        "scope": "Full workspace administration",
+        "permissions": ALL_PERMISSION_KEYS,
+        "role_type": "system",
+        "locked": 1,
+        "sort_order": 2,
+    },
+    {
+        "role_key": "manager",
+        "name": "Manager",
+        "description": "Team lead access for operations, analytics, and customer work.",
+        "scope": "Operational management",
+        "permissions": [
+            "page_dashboard", "page_conversations", "page_whatsapp_test_client", "page_analytics",
+            "page_customers", "page_team_members", "page_support", "export_data",
+        ],
+        "role_type": "system",
+        "locked": 1,
+        "sort_order": 3,
+    },
+    {
+        "role_key": "agent",
+        "name": "Agent",
+        "description": "Frontline access for assigned conversations and customer context.",
+        "scope": "Conversation handling",
+        "permissions": ["page_dashboard", "page_conversations", "page_customers", "page_support"],
+        "role_type": "system",
+        "locked": 1,
+        "sort_order": 4,
+    },
+    {
+        "role_key": "viewer",
+        "name": "Viewer",
+        "description": "Read-only dashboard and analytics visibility.",
+        "scope": "Read-only visibility",
+        "permissions": ["page_dashboard", "page_analytics", "page_support"],
+        "role_type": "system",
+        "locked": 1,
+        "sort_order": 5,
+    },
+]
+
+
+def normalize_role_key(name):
+    key = "".join(char.lower() if char.isalnum() else "_" for char in (name or "").strip())
+    key = "_".join(part for part in key.split("_") if part)
+    return key[:48]
+
+
+def normalize_permissions(permissions):
+    if isinstance(permissions, str):
+        try:
+            permissions = json.loads(permissions)
+        except json.JSONDecodeError:
+            permissions = [item.strip() for item in permissions.split(",")]
+    clean = []
+    allowed = set(ALL_PERMISSION_KEYS)
+    for item in permissions or []:
+        value = str(item).strip()
+        if value in allowed and value not in clean:
+            clean.append(value)
+    return clean
+
+
+def seed_system_roles(connection, tenant_id=1):
+    for role in SYSTEM_ROLES:
+        existing = connection.execute(
+            "SELECT id FROM team_roles WHERE tenant_id = ? AND role_key = ?",
+            (tenant_id, role["role_key"]),
+        ).fetchone()
+        values = (
+            role["name"],
+            role["description"],
+            role["role_type"],
+            role["locked"],
+            role["scope"],
+            json.dumps(role["permissions"]),
+            role["sort_order"],
+        )
+        if existing:
+            connection.execute(
+                """UPDATE team_roles
+                SET name = ?, description = ?, role_type = ?, locked = ?, scope = ?, permissions = ?, sort_order = ?
+                WHERE id = ?""",
+                (*values, existing["id"]),
+            )
+        else:
+            connection.execute(
+                """INSERT INTO team_roles
+                (tenant_id, role_key, name, description, role_type, locked, count, scope, permissions, sort_order)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)""",
+                (tenant_id, role["role_key"], *values),
+            )
+
+
+SUBSCRIPTION_PLANS = [
+    {
+        "plan_key": "starter",
+        "name": "Starter",
+        "monthly_price": "Rs 24,900",
+        "yearly_price": "Rs 249,000",
+        "conversation_limit": "5,000 conversations",
+        "ai_message_limit": "40,000 AI messages",
+        "seat_limit": "15 team seats",
+        "support_level": "Email support",
+        "features": "WhatsApp inbox, AI assistant, knowledge base, basic analytics",
+        "sort_order": 1,
+    },
+    {
+        "plan_key": "growth",
+        "name": "Growth",
+        "monthly_price": "Rs 84,200",
+        "yearly_price": "Rs 842,000",
+        "conversation_limit": "25,000 conversations",
+        "ai_message_limit": "200,000 AI messages",
+        "seat_limit": "100 team seats",
+        "support_level": "Priority support",
+        "features": "Advanced routing, workflows, analytics, add-on marketplace, team roles",
+        "sort_order": 2,
+    },
+    {
+        "plan_key": "enterprise",
+        "name": "Enterprise",
+        "monthly_price": "Custom",
+        "yearly_price": "Custom",
+        "conversation_limit": "Custom conversations",
+        "ai_message_limit": "Custom AI messages",
+        "seat_limit": "Unlimited team seats",
+        "support_level": "Dedicated success manager",
+        "features": "Custom modules, SSO-ready controls, premium support, implementation review",
+        "sort_order": 3,
+    },
+]
+
+
+def seed_subscription_plans(connection):
+    connection.executemany(
+        """INSERT INTO subscription_plans
+        (plan_key, name, monthly_price, yearly_price, conversation_limit, ai_message_limit, seat_limit, support_level, features, sort_order)
+        VALUES (:plan_key, :name, :monthly_price, :yearly_price, :conversation_limit, :ai_message_limit, :seat_limit, :support_level, :features, :sort_order)
+        ON CONFLICT(plan_key) DO UPDATE SET
+            name = excluded.name,
+            monthly_price = excluded.monthly_price,
+            yearly_price = excluded.yearly_price,
+            conversation_limit = excluded.conversation_limit,
+            ai_message_limit = excluded.ai_message_limit,
+            seat_limit = excluded.seat_limit,
+            support_level = excluded.support_level,
+            features = excluded.features,
+            sort_order = excluded.sort_order""",
+        SUBSCRIPTION_PLANS,
+    )
+
+
 def upsert_google_user(profile):
     google_sub = profile["sub"]
     email = profile["email"]
@@ -2028,7 +2909,8 @@ def upsert_google_user(profile):
         )
         connection.commit()
     return fetch_one(
-        """SELECT id, google_sub, email, name, picture, hosted_domain, console_theme,
+        """SELECT id, tenant_id, google_sub, email, name, picture, hosted_domain, permission_group,
+        onboarding_complete, console_theme,
         console_density, accent_color, default_sidebar
         FROM dashboard_users WHERE google_sub = ?""",
         (google_sub,),
@@ -2039,11 +2921,433 @@ def get_dashboard_user(user_id):
     if not user_id:
         return None
     return fetch_one(
-        """SELECT id, google_sub, email, name, picture, hosted_domain, console_theme,
+        """SELECT id, tenant_id, google_sub, email, name, picture, hosted_domain, permission_group,
+        onboarding_complete, console_theme,
         console_density, accent_color, default_sidebar
         FROM dashboard_users WHERE id = ?""",
         (user_id,),
     )
+
+
+def permission_group_label(group_key):
+    role = get_role(group_key or "viewer")
+    return role["name"] if role else "Viewer"
+
+
+def get_permission_groups():
+    users_by_group = {
+        row["permission_group"]: row["count"]
+        for row in fetch_all("SELECT permission_group, COUNT(*) AS count FROM dashboard_users GROUP BY permission_group")
+    }
+    members_by_group = {
+        row["permission_group"]: row["count"]
+        for row in fetch_all("SELECT permission_group, COUNT(*) AS count FROM team_members GROUP BY permission_group")
+    }
+    roles = get_roles()
+    for role in roles:
+        role["users"] = int(users_by_group.get(role["key"], 0)) + int(members_by_group.get(role["key"], 0))
+    return roles
+
+
+def permission_catalog_grouped():
+    groups = {}
+    for permission in PERMISSION_CATALOG:
+        groups.setdefault(permission["group"], []).append(permission)
+    return [{"name": name, "permissions": permissions} for name, permissions in groups.items()]
+
+
+def decorate_role(row):
+    if not row:
+        return None
+    permissions = normalize_permissions(row.get("permissions"))
+    if row.get("role_key") in {"owner", "admin"}:
+        permissions = list(ALL_PERMISSION_KEYS)
+    role = {
+        "id": row.get("id"),
+        "key": row.get("role_key"),
+        "role_key": row.get("role_key"),
+        "name": row.get("name"),
+        "description": row.get("description") or row.get("scope") or "",
+        "scope": row.get("scope") or row.get("description") or "",
+        "role_type": row.get("role_type") or "custom",
+        "locked": bool(row.get("locked")),
+        "permissions": permissions,
+        "permissions_text": ", ".join(
+            item["label"] for item in PERMISSION_CATALOG if item["key"] in permissions
+        ) or "No permissions selected",
+        "is_system": (row.get("role_type") or "") == "system",
+    }
+    return role
+
+
+def get_roles(tenant_id=1, include_owner=True):
+    rows = fetch_all(
+        """SELECT id, role_key, name, description, role_type, locked, scope, permissions
+        FROM team_roles WHERE tenant_id = ? ORDER BY sort_order, id""",
+        (tenant_id,),
+    )
+    roles = [decorate_role(row) for row in rows]
+    if not include_owner:
+        roles = [role for role in roles if role["key"] != "owner"]
+    return roles
+
+
+def get_role(role_key, tenant_id=1):
+    row = fetch_one(
+        """SELECT id, role_key, name, description, role_type, locked, scope, permissions
+        FROM team_roles WHERE tenant_id = ? AND role_key = ?""",
+        (tenant_id, role_key),
+    )
+    return decorate_role(row)
+
+
+def role_exists(role_key, tenant_id=1):
+    return bool(get_role(role_key, tenant_id))
+
+
+def get_dashboard_users():
+    rows = fetch_all(
+        """SELECT id, email, name, picture, hosted_domain, permission_group, created_at, last_login_at
+        FROM dashboard_users ORDER BY created_at, id"""
+    )
+    for row in rows:
+        row["permission_label"] = permission_group_label(row.get("permission_group"))
+        row["is_owner"] = row.get("permission_group") == "owner"
+    return rows
+
+
+def get_dashboard_user_by_id(user_id):
+    if not user_id:
+        return None
+    user = fetch_one(
+        """SELECT id, email, name, picture, hosted_domain, permission_group, created_at, last_login_at
+        FROM dashboard_users WHERE id = ?""",
+        (user_id,),
+    )
+    if user:
+        user["permission_label"] = permission_group_label(user.get("permission_group"))
+        user["is_owner"] = user.get("permission_group") == "owner"
+    return user
+
+
+def update_dashboard_user_permission_group(user_id, permission_group):
+    if not role_exists(permission_group):
+        raise ValueError("Choose a valid permission group.")
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE dashboard_users SET permission_group = ? WHERE id = ?",
+            (permission_group, user_id),
+        )
+        connection.commit()
+        if cursor.rowcount == 0:
+            return None
+    return get_dashboard_user_by_id(user_id)
+
+
+def update_team_member_permission_group(member_id, permission_group, tenant_id=1):
+    if not role_exists(permission_group, tenant_id):
+        raise ValueError("Choose a valid permission group.")
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE team_members SET permission_group = ? WHERE id = ? AND tenant_id = ?",
+            (permission_group, member_id, tenant_id),
+        )
+        connection.commit()
+        if cursor.rowcount == 0:
+            return None
+    return fetch_one("SELECT * FROM team_members WHERE id = ? AND tenant_id = ?", (member_id, tenant_id))
+
+
+def create_role(data, tenant_id=1):
+    name = (data.get("name") or "").strip()
+    if not name:
+        raise ValueError("Enter a role name.")
+    role_key = normalize_role_key(data.get("role_key") or name)
+    if not role_key:
+        raise ValueError("Enter a valid role name.")
+    if role_key in {"owner", "admin"}:
+        raise ValueError("Owner and Admin are protected system roles.")
+    if role_exists(role_key, tenant_id):
+        raise ValueError("A role with that name already exists.")
+    permissions = normalize_permissions(data.get("permissions"))
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """INSERT INTO team_roles
+            (tenant_id, role_key, name, description, role_type, locked, count, scope, permissions, sort_order)
+            VALUES (?, ?, ?, ?, 'custom', 0, 0, ?, ?,
+            (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM team_roles WHERE tenant_id = ?))""",
+            (
+                tenant_id,
+                role_key,
+                name,
+                (data.get("description") or data.get("scope") or "").strip(),
+                (data.get("scope") or data.get("description") or "Custom workspace access").strip(),
+                json.dumps(permissions),
+                tenant_id,
+            ),
+        )
+        connection.commit()
+    return get_role(role_key, tenant_id)
+
+
+def update_role(role_key, data, tenant_id=1):
+    role = get_role(role_key, tenant_id)
+    if not role:
+        return None, "missing"
+    if role["locked"]:
+        return None, "locked"
+    name = (data.get("name") or role["name"]).strip()
+    if not name:
+        raise ValueError("Enter a role name.")
+    permissions = normalize_permissions(data.get("permissions"))
+    with get_connection() as connection:
+        connection.execute(
+            """UPDATE team_roles
+            SET name = ?, description = ?, scope = ?, permissions = ?
+            WHERE tenant_id = ? AND role_key = ?""",
+            (
+                name,
+                (data.get("description") or data.get("scope") or role["description"]).strip(),
+                (data.get("scope") or data.get("description") or role["scope"]).strip(),
+                json.dumps(permissions),
+                tenant_id,
+                role_key,
+            ),
+        )
+        connection.commit()
+    return get_role(role_key, tenant_id), None
+
+
+def delete_role(role_key, tenant_id=1):
+    role = get_role(role_key, tenant_id)
+    if not role:
+        return "missing"
+    if role["locked"]:
+        return "locked"
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE dashboard_users SET permission_group = 'viewer' WHERE tenant_id = ? AND permission_group = ?",
+            (tenant_id, role_key),
+        )
+        connection.execute(
+            "UPDATE team_members SET permission_group = 'viewer' WHERE tenant_id = ? AND permission_group = ?",
+            (tenant_id, role_key),
+        )
+        connection.execute("DELETE FROM team_roles WHERE tenant_id = ? AND role_key = ?", (tenant_id, role_key))
+        connection.commit()
+    return "deleted"
+
+
+def get_subscription_plans():
+    plans = fetch_all(
+        """SELECT plan_key, name, monthly_price, yearly_price, conversation_limit,
+        ai_message_limit, seat_limit, support_level, features, sort_order
+        FROM subscription_plans ORDER BY sort_order"""
+    )
+    for plan in plans:
+        plan["features_list"] = [item.strip() for item in plan["features"].split(",") if item.strip()]
+    return plans
+
+
+def get_subscription_plan(plan_key):
+    plan = fetch_one(
+        """SELECT plan_key, name, monthly_price, yearly_price, conversation_limit,
+        ai_message_limit, seat_limit, support_level, features
+        FROM subscription_plans WHERE plan_key = ?""",
+        (plan_key,),
+    )
+    if plan:
+        plan["features_list"] = [item.strip() for item in plan["features"].split(",") if item.strip()]
+    return plan
+
+
+def get_or_create_onboarding_session(user_id):
+    session = fetch_one("SELECT * FROM onboarding_sessions WHERE user_id = ?", (user_id,))
+    if session:
+        return decorate_onboarding_session(session)
+    user = get_dashboard_user(user_id) or {}
+    with get_connection() as connection:
+        connection.execute(
+            """INSERT INTO onboarding_sessions (user_id, company_email)
+            VALUES (?, ?)""",
+            (user_id, user.get("email") or ""),
+        )
+        connection.commit()
+    return decorate_onboarding_session(fetch_one("SELECT * FROM onboarding_sessions WHERE user_id = ?", (user_id,)))
+
+
+def decorate_onboarding_session(session):
+    if not session:
+        return None
+    session["email_verified"] = bool(session.get("email_verified"))
+    session["whatsapp_verified"] = bool(session.get("whatsapp_verified"))
+    session["is_complete"] = bool(session.get("completed_at"))
+    session["selected_plan_detail"] = get_subscription_plan(session.get("selected_plan") or "growth")
+    return session
+
+
+def update_onboarding_account(user_id, data):
+    with get_connection() as connection:
+        connection.execute(
+            """UPDATE dashboard_users SET name = ?, email = ?
+            WHERE id = ?""",
+            (data["name"], data["email"], user_id),
+        )
+        connection.execute(
+            """INSERT INTO onboarding_sessions (user_id, company_email, current_step)
+            VALUES (?, ?, 'company')
+            ON CONFLICT(user_id) DO UPDATE SET
+                company_email = excluded.company_email,
+                current_step = 'company',
+                updated_at = CURRENT_TIMESTAMP""",
+            (user_id, data["email"]),
+        )
+        connection.commit()
+    return get_or_create_onboarding_session(user_id)
+
+
+def update_onboarding_company(user_id, data):
+    with get_connection() as connection:
+        connection.execute(
+            """INSERT INTO onboarding_sessions
+            (user_id, company_name, industry, timezone, language, company_email, company_phone, current_step)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'verify_email')
+            ON CONFLICT(user_id) DO UPDATE SET
+                company_name = excluded.company_name,
+                industry = excluded.industry,
+                timezone = excluded.timezone,
+                language = excluded.language,
+                company_email = excluded.company_email,
+                company_phone = excluded.company_phone,
+                current_step = 'verify_email',
+                updated_at = CURRENT_TIMESTAMP""",
+            (
+                user_id,
+                data["company_name"],
+                data["industry"],
+                data["timezone"],
+                data["language"],
+                data["company_email"],
+                data["company_phone"],
+            ),
+        )
+        connection.commit()
+    return get_or_create_onboarding_session(user_id)
+
+
+def save_verification_code(user_id, channel, destination, code_hash, expires_at, purpose="onboarding"):
+    with get_connection() as connection:
+        connection.execute(
+            """INSERT INTO verification_codes
+            (user_id, channel, destination, code_hash, purpose, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (user_id, channel, destination, code_hash, purpose, expires_at),
+        )
+        connection.commit()
+    return fetch_one(
+        """SELECT * FROM verification_codes
+        WHERE user_id = ? AND channel = ? AND purpose = ?
+        ORDER BY id DESC LIMIT 1""",
+        (user_id, channel, purpose),
+    )
+
+
+def get_latest_verification_code(user_id, channel, purpose="onboarding"):
+    return fetch_one(
+        """SELECT * FROM verification_codes
+        WHERE user_id = ? AND channel = ? AND purpose = ?
+        ORDER BY id DESC LIMIT 1""",
+        (user_id, channel, purpose),
+    )
+
+
+def increment_verification_attempt(code_id):
+    with get_connection() as connection:
+        connection.execute("UPDATE verification_codes SET attempts = attempts + 1 WHERE id = ?", (code_id,))
+        connection.commit()
+
+
+def mark_onboarding_channel_verified(user_id, channel):
+    field = "email_verified" if channel == "email" else "whatsapp_verified"
+    next_step = "verify_whatsapp" if channel == "email" else "plan"
+    with get_connection() as connection:
+        connection.execute("UPDATE verification_codes SET verified_at = CURRENT_TIMESTAMP WHERE user_id = ? AND channel = ? AND purpose = 'onboarding'", (user_id, channel))
+        connection.execute(
+            f"""UPDATE onboarding_sessions
+            SET {field} = 1, current_step = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?""",
+            (next_step, user_id),
+        )
+        connection.commit()
+    return get_or_create_onboarding_session(user_id)
+
+
+def update_onboarding_plan(user_id, plan_key, billing_cycle):
+    if billing_cycle not in {"monthly", "yearly"}:
+        raise ValueError("Choose monthly or yearly billing.")
+    if not get_subscription_plan(plan_key):
+        raise ValueError("Choose a valid plan.")
+    with get_connection() as connection:
+        connection.execute(
+            """UPDATE onboarding_sessions
+            SET selected_plan = ?, billing_cycle = ?, current_step = 'review', updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?""",
+            (plan_key, billing_cycle, user_id),
+        )
+        connection.commit()
+    return get_or_create_onboarding_session(user_id)
+
+
+def complete_onboarding(user_id):
+    session = get_or_create_onboarding_session(user_id)
+    if not session:
+        raise ValueError("Start onboarding before creating a workspace.")
+    required = ["company_name", "industry", "timezone", "language", "company_email", "company_phone"]
+    missing = [field for field in required if not str(session.get(field) or "").strip()]
+    if missing:
+        raise ValueError("Complete the company profile before creating the workspace.")
+    if not session.get("email_verified") or not session.get("whatsapp_verified"):
+        raise ValueError("Verify both email and WhatsApp before creating the workspace.")
+    existing_owner = fetch_one(
+        """SELECT id FROM dashboard_users
+        WHERE tenant_id = 1 AND permission_group = 'owner' AND id != ?""",
+        (user_id,),
+    )
+    if existing_owner:
+        return None, "owner_conflict"
+    with get_connection() as connection:
+        connection.execute(
+            """UPDATE tenants
+            SET name = ?, industry = ?, timezone = ?, language = ?,
+                owner_user_id = ?, subscription_plan = ?, billing_cycle = ?,
+                company_email = ?, company_phone = ?, onboarding_status = 'complete'
+            WHERE id = 1""",
+            (
+                session["company_name"],
+                session["industry"],
+                session["timezone"],
+                session["language"],
+                user_id,
+                session["selected_plan"],
+                session["billing_cycle"],
+                session["company_email"],
+                session["company_phone"],
+            ),
+        )
+        connection.execute(
+            """UPDATE dashboard_users
+            SET tenant_id = 1, permission_group = 'owner', onboarding_complete = 1
+            WHERE id = ?""",
+            (user_id,),
+        )
+        connection.execute(
+            """UPDATE onboarding_sessions
+            SET completed_at = CURRENT_TIMESTAMP, current_step = 'complete', updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?""",
+            (user_id,),
+        )
+        connection.commit()
+    return get_or_create_onboarding_session(user_id), None
 
 
 def update_dashboard_user_preferences(user_id, preferences):
@@ -2138,13 +3442,18 @@ def update_customer(customer_id, data, tenant_id=1):
 
 
 def create_or_update_team_member(data, member_id=None, tenant_id=1):
+    permission_group = data.get("permission_group") or "agent"
+    if permission_group not in PERMISSION_GROUP_MAP:
+        raise ValueError("Choose a valid permission group.")
     with get_connection() as connection:
         if member_id:
             cursor = connection.execute(
-                """UPDATE team_members SET name = ?, role = ?, team = ?, status = ?, assigned = ?, resolved = ?, csat = ?
+                """UPDATE team_members SET name = ?, email = ?, permission_group = ?, role = ?, team = ?, status = ?, assigned = ?, resolved = ?, csat = ?
                 WHERE id = ? AND tenant_id = ?""",
                 (
                     data["name"],
+                    data.get("email") or "",
+                    permission_group,
                     data.get("role") or "Agent",
                     data.get("team") or "Support Desk",
                     data.get("status") or "Invited",
@@ -2161,10 +3470,19 @@ def create_or_update_team_member(data, member_id=None, tenant_id=1):
         else:
             cursor = connection.execute(
                 """INSERT INTO team_members
-                (tenant_id, name, role, team, status, assigned, resolved, csat, sort_order)
-                VALUES (?, ?, ?, ?, ?, 0, 0, 'N/A',
+                (tenant_id, name, email, permission_group, role, team, status, assigned, resolved, csat, sort_order)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 'N/A',
                 (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM team_members WHERE tenant_id = ?))""",
-                (tenant_id, data["name"], data.get("role") or "Agent", data.get("team") or "Support Desk", data.get("status") or "Invited", tenant_id),
+                (
+                    tenant_id,
+                    data["name"],
+                    data.get("email") or "",
+                    permission_group,
+                    data.get("role") or "Agent",
+                    data.get("team") or "Support Desk",
+                    data.get("status") or "Invited",
+                    tenant_id,
+                ),
             )
             member_id = cursor.lastrowid
         connection.commit()
@@ -2215,6 +3533,7 @@ def get_conversation_thread(thread_id, tenant_id=1):
     thread = fetch_one("SELECT * FROM conversation_threads WHERE id = ? AND tenant_id = ?", (thread_id, tenant_id))
     if not thread:
         return None
+    conversation_row_decorated(thread)
     messages = fetch_all(
         """SELECT id, sender, role, body, created_at FROM conversation_messages
         WHERE thread_id = ? AND tenant_id = ? ORDER BY sort_order, id""",
@@ -2226,7 +3545,79 @@ def get_conversation_thread(thread_id, tenant_id=1):
             {"sender": "AI Assistant", "role": "assistant", "body": "I am reviewing the latest context and will respond with the next best action.", "created_at": ""},
         ]
     thread["messages_list"] = messages
+    thread["ai_decision"] = get_ai_escalation_decision(thread_id, tenant_id)
     return thread
+
+
+def record_audit_event(event, user="System", status="Done", tenant_id=1, ip="local"):
+    with get_connection() as connection:
+        connection.execute(
+            """INSERT INTO audit_logs (tenant_id, event, user, ip, time, status, sort_order)
+            VALUES (?, ?, ?, ?, 'Just now', ?,
+            (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM audit_logs WHERE tenant_id = ?))""",
+            (tenant_id, event, user, ip, status, tenant_id),
+        )
+        connection.commit()
+
+
+def get_ai_escalation_decision(thread_id, tenant_id=1):
+    decision = fetch_one(
+        """SELECT id, thread_id, decision, confidence, reason, suggested_action,
+        risk_flags, model, mode, created_at, updated_at
+        FROM ai_escalation_decisions
+        WHERE thread_id = ? AND tenant_id = ?""",
+        (thread_id, tenant_id),
+    )
+    if not decision:
+        return None
+    try:
+        decision["risk_flags"] = json.loads(decision.get("risk_flags") or "[]")
+    except json.JSONDecodeError:
+        decision["risk_flags"] = []
+    return decision
+
+
+def save_ai_escalation_decision(thread_id, decision, tenant_id=1):
+    risk_flags = decision.get("risk_flags") or []
+    if isinstance(risk_flags, str):
+        risk_flags = [risk_flags]
+    payload = {
+        "decision": "escalate" if decision.get("decision") == "escalate" else "continue",
+        "confidence": max(0, min(100, int(decision.get("confidence") or 0))),
+        "reason": str(decision.get("reason") or "No reason provided.").strip(),
+        "suggested_action": str(decision.get("suggested_action") or "Review the conversation and continue with care.").strip(),
+        "risk_flags": json.dumps([str(flag).strip() for flag in risk_flags if str(flag).strip()]),
+        "model": str(decision.get("model") or "Rule fallback").strip(),
+        "mode": "auto" if decision.get("mode") == "auto" else "recommend",
+    }
+    with get_connection() as connection:
+        connection.execute(
+            """INSERT INTO ai_escalation_decisions
+            (thread_id, tenant_id, decision, confidence, reason, suggested_action, risk_flags, model, mode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(thread_id, tenant_id) DO UPDATE SET
+                decision = excluded.decision,
+                confidence = excluded.confidence,
+                reason = excluded.reason,
+                suggested_action = excluded.suggested_action,
+                risk_flags = excluded.risk_flags,
+                model = excluded.model,
+                mode = excluded.mode,
+                updated_at = CURRENT_TIMESTAMP""",
+            (
+                thread_id,
+                tenant_id,
+                payload["decision"],
+                payload["confidence"],
+                payload["reason"],
+                payload["suggested_action"],
+                payload["risk_flags"],
+                payload["model"],
+                payload["mode"],
+            ),
+        )
+        connection.commit()
+    return get_ai_escalation_decision(thread_id, tenant_id)
 
 
 def add_conversation_message(thread_id, body, sender="Workspace Admin", role="agent", tenant_id=1):
@@ -2253,14 +3644,23 @@ def add_conversation_message(thread_id, body, sender="Workspace Admin", role="ag
     return fetch_one("SELECT id, sender, role, body, created_at FROM conversation_messages WHERE id = ?", (cursor.lastrowid,))
 
 
-def assign_conversation_thread(thread_id, owner, tenant_id=1):
+def assign_conversation_thread(thread_id, owner, tenant_id=1, assigned_user_id=None, assigned_user_name=""):
     with get_connection() as connection:
         cursor = connection.execute(
-            "UPDATE conversation_threads SET handler = 'Human', status = 'Escalated', sla = 'Assigned', time = 'Just now' WHERE id = ? AND tenant_id = ?",
-            (thread_id, tenant_id),
+            """UPDATE conversation_threads
+            SET handler = 'Human',
+                status = 'Escalated',
+                sla = 'Assigned',
+                time = 'Just now',
+                assigned_team = ?,
+                assigned_user_id = ?,
+                assigned_user_name = ?,
+                assigned_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND tenant_id = ?""",
+            (owner, assigned_user_id, assigned_user_name, thread_id, tenant_id),
         )
         connection.commit()
-    return cursor.rowcount > 0
+    return get_conversation_thread(thread_id, tenant_id) if cursor.rowcount else None
 
 
 def update_conversation_thread_status(thread_id, status, tenant_id=1):
@@ -2268,11 +3668,17 @@ def update_conversation_thread_status(thread_id, status, tenant_id=1):
         raise ValueError("Unsupported status.")
     with get_connection() as connection:
         cursor = connection.execute(
-            "UPDATE conversation_threads SET status = ?, sla = CASE WHEN ? = 'Resolved' THEN 'Resolved' ELSE sla END WHERE id = ? AND tenant_id = ?",
-            (status, status, thread_id, tenant_id),
+            """UPDATE conversation_threads
+            SET status = ?,
+                handler = CASE WHEN ? = 'Escalated' THEN 'Human' WHEN ? = 'Active' THEN 'AI' ELSE handler END,
+                sla = CASE WHEN ? = 'Resolved' THEN 'Resolved' WHEN ? = 'Active' AND sla = 'Resolved' THEN '10m' ELSE sla END,
+                resolved_at = CASE WHEN ? = 'Resolved' THEN CURRENT_TIMESTAMP WHEN ? = 'Active' THEN '' ELSE resolved_at END,
+                time = 'Just now'
+            WHERE id = ? AND tenant_id = ?""",
+            (status, status, status, status, status, status, status, thread_id, tenant_id),
         )
         connection.commit()
-    return cursor.rowcount > 0
+    return get_conversation_thread(thread_id, tenant_id) if cursor.rowcount else None
 
 
 def add_support_ticket(data, tenant_id=1):
@@ -2339,15 +3745,18 @@ def save_workspace_settings(section, data, tenant_id=1):
                 (data["webhook_url"], data["message_window_policy"], tenant_id),
             )
         elif section == "handoff":
+            mode = "auto" if data.get("escalation_decision_mode") == "auto" else "recommend"
             connection.execute(
                 """UPDATE workspace_settings SET default_handoff_team = ?, sla_target = ?,
-                handoff_low_confidence = ?, handoff_negative_sentiment = ?, updated_at = CURRENT_TIMESTAMP
+                handoff_low_confidence = ?, handoff_negative_sentiment = ?,
+                escalation_decision_mode = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE tenant_id = ?""",
                 (
                     data["default_handoff_team"],
                     data["sla_target"],
                     int(bool(data.get("handoff_low_confidence", True))),
                     int(bool(data.get("handoff_negative_sentiment", True))),
+                    mode,
                     tenant_id,
                 ),
             )

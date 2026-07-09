@@ -48,6 +48,25 @@ body.theme-dark .navbar {
     color: var(--text-soft);
 }
 
+.mobile-menu-btn:hover,
+.nav-btn:hover,
+.icon-button:hover,
+.profile-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.mobile-menu-btn:active,
+.nav-btn:active,
+.icon-button:active,
+.profile-btn:active,
+.primary-action:active,
+.secondary-action:active {
+    transform: translateY(0);
+}
+
 .mobile-menu-btn {
     display: none;
 }

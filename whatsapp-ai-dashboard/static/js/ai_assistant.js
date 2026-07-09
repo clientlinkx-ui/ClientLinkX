@@ -1,4 +1,5 @@
 const initAssistantSimulator = () => {
+    const root = document.querySelector('.ai-page');
     const providerSelect = document.getElementById('assistantProvider');
     const apiKeyInput = document.getElementById('assistantApiKey');
     const apiUrlInput = document.getElementById('assistantApiUrl');
@@ -9,7 +10,7 @@ const initAssistantSimulator = () => {
     const timeline = document.getElementById('assistantSimulatorMessages');
     const statusBadge = document.getElementById('ollamaStatus');
 
-    if (!providerSelect || !apiKeyInput || !apiUrlInput || !modelInput || !saveButton || !sendButton || !messageInput || !timeline || !statusBadge) {
+    if (!root || !providerSelect || !apiKeyInput || !apiUrlInput || !modelInput || !saveButton || !sendButton || !messageInput || !timeline || !statusBadge || !window.PingPilot?.initOnce(root, 'assistant-simulator')) {
         return;
     }
 
@@ -154,12 +155,6 @@ const initAssistantSimulator = () => {
     restoreSavedConfig();
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAssistantSimulator);
-} else {
-    initAssistantSimulator();
-}
-
 const aiJson = async (url, options = {}) => {
     const response = await fetch(url, {
         ...options,
@@ -191,6 +186,8 @@ const appendBubble = (timeline, role, label, content) => {
 };
 
 const initAiManagement = () => {
+    const root = document.querySelector('.ai-page');
+    if (!root || !window.PingPilot?.initOnce(root, 'ai-management')) return;
     const save = document.getElementById('saveAiRuntime');
     const deploy = document.getElementById('deployAiRuntime');
     const status = document.getElementById('aiRuntimeStatus');
@@ -237,8 +234,9 @@ const initAiManagement = () => {
 };
 
 const initPromptBuilder = () => {
+    const root = document.querySelector('.prompt-page');
     const cards = [...document.querySelectorAll('.prompt-resource')];
-    if (!document.getElementById('promptName')) return;
+    if (!root || !document.getElementById('promptName') || !window.PingPilot?.initOnce(root, 'prompt-builder')) return;
     let currentId = null;
     const fields = {
         name: document.getElementById('promptName'), module: document.getElementById('promptModule'),
@@ -301,8 +299,9 @@ const initPromptBuilder = () => {
 };
 
 const initWorkflows = () => {
+    const root = document.querySelector('.workflows-page');
     const cards = [...document.querySelectorAll('.workflow-resource')];
-    if (!document.getElementById('workflowName')) return;
+    if (!root || !document.getElementById('workflowName') || !window.PingPilot?.initOnce(root, 'workflows')) return;
     let currentId = null;
     let currentStatus = 'Draft';
     const status = document.getElementById('workflowStatus');
@@ -350,6 +349,8 @@ const initWorkflows = () => {
 };
 
 const initKnowledgeManagement = () => {
+    const root = document.querySelector('.knowledge-page');
+    if (!root || !window.PingPilot?.initOnce(root, 'knowledge-management')) return;
     document.getElementById('addKnowledgeSource')?.addEventListener('click', () => document.getElementById('knowledgeDocumentImporter')?.scrollIntoView({ behavior: 'smooth' }));
     document.querySelectorAll('.knowledge-status').forEach((button) => button.addEventListener('click', async () => {
         const next = button.dataset.status === 'Published' ? 'Draft' : 'Published';
@@ -369,6 +370,13 @@ const initKnowledgeManagement = () => {
     });
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    initAiManagement(); initPromptBuilder(); initWorkflows(); initKnowledgeManagement();
-});
+const initAiPages = () => {
+    initAssistantSimulator();
+    initAiManagement();
+    initPromptBuilder();
+    initWorkflows();
+    initKnowledgeManagement();
+};
+
+window.PingPilot?.ready ? PingPilot.ready(initAiPages) : document.addEventListener('DOMContentLoaded', initAiPages);
+document.addEventListener('pingpilot:page-ready', initAiPages);
